@@ -1,0 +1,72 @@
+/*
+ * Base layer shared by every interactive: self-hosted faces, page ground, focus
+ * treatment. Fonts are bundled rather than linked because booth machines routinely
+ * have no usable network, and a silent fallback to system-ui would change metrics
+ * enough to break the layouts these interactives are set in.
+ */
+
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/inter-tight-latin.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin.woff2') format('woff2');
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Booth screens get grabbed at; nothing here benefits from text selection. */
+  body[data-kiosk='true'] {
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body[data-kiosk='true'] input {
+    user-select: text;
+  }
+
+  ::selection {
+    background-color: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* Tabular figures everywhere numbers are compared: timers, counts, ranks. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,136 @@
+/*
+ * cpatgt shared theme — editorial / warm paper.
+ *
+ * Palette discipline: the surface is near-monochrome warm neutrals, and the ochre
+ * accent is reserved for one meaning only — the visitor's own pending action. If a
+ * future interactive starts using accent for decoration, that meaning is lost.
+ *
+ * Colors are declared twice: raw values on :root (and its dark overrides), then
+ * mapped into Tailwind's --color-* namespace with `@theme inline` so utilities
+ * reference the swappable variable rather than a frozen value.
+ */
+
+:root {
+  --ground: #faf9f7;
+  --ground-raised: #ffffff;
+  --ground-sunken: #f2f0ec;
+  --ink: #16150f;
+  --ink-muted: #6b6862;
+  --ink-faint: #9c9891;
+  --hairline: #e3e0da;
+  --hairline-strong: #cfcbc3;
+  --accent: #a8620a;
+  --accent-soft: #f4e7d4;
+  --accent-ink: #ffffff;
+
+  --duration-quick: 140ms;
+  --duration-settle: 260ms;
+  --duration-slow: 700ms;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #131211;
+    --ground-raised: #1b1a18;
+    --ground-sunken: #0e0d0c;
+    --ink: #edebe5;
+    --ink-muted: #9a958c;
+    --ink-faint: #6e6960;
+    --hairline: #2c2a27;
+    --hairline-strong: #3d3a35;
+    --accent: #d68a2e;
+    --accent-soft: #2e2419;
+    --accent-ink: #16150f;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #131211;
+  --ground-raised: #1b1a18;
+  --ground-sunken: #0e0d0c;
+  --ink: #edebe5;
+  --ink-muted: #9a958c;
+  --ink-faint: #6e6960;
+  --hairline: #2c2a27;
+  --hairline-strong: #3d3a35;
+  --accent: #d68a2e;
+  --accent-soft: #2e2419;
+  --accent-ink: #16150f;
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-ground-raised: var(--ground-raised);
+  --color-ground-sunken: var(--ground-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+}
+
+@theme {
+  --font-sans:
+    'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'Cascadia Mono', Menlo, monospace;
+
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* Micro-label: uppercase, tracked, small. The workhorse of the editorial look. */
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1;
+  --text-micro--letter-spacing: 0.14em;
+
+  --animate-fade-in: fade-in var(--duration-slow) var(--ease-out-quart) both;
+  --animate-rise-in: rise-in var(--duration-settle) var(--ease-out-quart) both;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slow enough to read as breathing rather than blinking. */
+  @keyframes pulse-label {
+    0%,
+    100% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* The bot's take: stones contract and leave, they do not fly across the board. */
+  @keyframes stone-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+  }
+}

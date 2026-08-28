@@ -1,0 +1,28 @@
+# Dependencies and build output. package-lock.json is deliberately NOT ignored —
+# `npm ci` and the supply-chain policy in README.md depend on it being committed.
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local caches
+.vite/
+coverage/
+.vitest/
+
+# Environment and machine-local overrides
+*.local
+.env
+.env.*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+@import '@cpatgt/shared/theme.css';
+@import '@cpatgt/shared/base.css';
+
+/* Shared components live outside this package's root, so Tailwind has to be told
+   to scan them or every class they use is purged from the production build. */
+@source './';
+@source '../../shared/src';
