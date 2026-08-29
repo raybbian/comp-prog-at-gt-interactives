@@ -8,14 +8,17 @@
   "workspaces": [
     "shared",
     "nim",
-    "milk"
+    "milk",
+    "poster"
   ],
   "scripts": {
     "dev:nim": "npm run dev -w nim",
     "dev:milk": "npm run dev -w milk",
+    "dev:poster": "npm run dev -w poster",
     "build": "npm run build --workspaces --if-present",
     "preview:nim": "npm run preview -w nim",
     "preview:milk": "npm run preview -w milk",
+    "preview:poster": "npm run preview -w poster",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "npm run typecheck --workspaces --if-present"

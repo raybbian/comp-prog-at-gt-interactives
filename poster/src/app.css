@@ -1,0 +1,58 @@
+@import 'tailwindcss';
+@import '@cpatgt/shared/theme.css';
+@import '@cpatgt/shared/base.css';
+
+/* Shared components live outside this package's root, so Tailwind has to be told
+   to scan them or every class they use is purged from the production build. */
+@source './';
+@source '../../shared/src';
+
+@theme {
+  /* Ken Burns. Long enough that a passer-by reads the photographs as still and
+     someone waiting in the queue notices them breathing. Always scaled past 1 so
+     the frame never uncovers an edge. */
+  --animate-drift: drift 52s ease-in-out infinite alternate;
+
+  @keyframes drift {
+    from {
+      transform: scale(1.06) translate(1%, 1%);
+    }
+    to {
+      transform: scale(1.16) translate(-1.5%, -2%);
+    }
+  }
+
+  /* Block caret on the command line. Steps, not a fade — a terminal cursor snaps. */
+  --animate-caret: caret 1.1s steps(1, end) infinite;
+
+  @keyframes caret {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    50.01%,
+    100% {
+      opacity: 0;
+    }
+  }
+}
+
+@layer base {
+  /* One screen, exactly. A poster that can scroll is a poster someone has scrolled
+     halfway off the TV. */
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* base.css already collapses durations. The staggered entrance also needs its
+     delays dropped, or the bands sit invisible for a second before snapping in. */
+  *,
+  *::before,
+  *::after {
+    animation-delay: 0ms !important;
+  }
+}

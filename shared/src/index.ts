@@ -12,7 +12,11 @@ export { DiscordQR, type DiscordQRProps } from './components/DiscordQR';
 export { GameOverPanel, type GameOverPanelProps } from './components/GameOverPanel';
 export { HelpDialog, type HelpDialogProps, type HelpTopic } from './components/HelpDialog';
 export { Leaderboard, type LeaderboardProps } from './components/Leaderboard';
-export { MicroLabel, type MicroLabelProps } from './components/MicroLabel';
+export {
+  MicroLabel,
+  type MicroLabelProps,
+  type MicroLabelSize,
+} from './components/MicroLabel';
 export { Rule, type RuleProps } from './components/Rule';
 
 export {

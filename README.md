@@ -16,6 +16,7 @@ nvm use            # Node 24, pinned in .nvmrc
 npm ci             # exact versions from the committed lockfile
 npm run dev:nim    # http://localhost:5173
 npm run dev:milk   # http://localhost:5174
+npm run dev:poster # http://localhost:5175
 ```
 
 Other scripts, all from the repo root:
@@ -24,11 +25,12 @@ Other scripts, all from the repo root:
 npm test           # vitest across every workspace
 npm run typecheck
 npm run build      # both interactives -> <name>/dist
-npm run preview:nim   # serves nim/dist  on :4173
-npm run preview:milk  # serves milk/dist on :4174
+npm run preview:nim    # serves nim/dist    on :4173
+npm run preview:milk   # serves milk/dist   on :4174
+npm run preview:poster # serves poster/dist on :4175
 ```
 
-Ports are pinned per interactive so both can run side by side on one booth machine.
+Ports are pinned per folder so they can all run side by side on one booth machine.
 
 ## Nim
 
@@ -147,7 +149,78 @@ into the single number the shared leaderboard sorts on (`game/score.ts`) and sho
 
 There is no hint in this interactive.
 
+## Poster
+
+Not an interactive — a single 16:9 screen about the club, for a TV that nobody is
+going to touch. It answers "what is this club" for the queue and for anyone walking
+past the table, and carries the Discord QR for whoever wants in.
+
+**Every word and image on it comes from competitiveprogrammingatgt.com.** Nothing is
+written or drawn for the poster. `src/content.ts` is the whole of the copy, and each
+block in it names the file in the website repo it was transcribed from, so a claim on
+a booth TV can be traced back to the page that already makes it in public. The
+photography is imported by script rather than by hand:
+
+```sh
+node poster/scripts/import-assets.mjs [path-to-comp-prog-at-gt]
+```
+
+which resizes the site's photos for a booth screen and copies the sponsor wordmarks
+across. It defaults to a sibling `../comp-prog-at-gt` checkout and needs ImageMagick 7.
+When the website's art or copy changes, re-run it and re-transcribe — do not edit
+prose or drop images into `src/assets/` directly.
+
+### Running it at the booth
+
+```sh
+npm ci && npm run build && npm run preview:poster
+```
+
+Open the URL and press F11. There is nothing else to do: the page has no state, no
+timers to expire and no input to handle, so it can be left up for the whole event.
+Disable the machine's sleep and screensaver as usual.
+
+### One canvas, scaled
+
+The poster is composed once at exactly 1920x1080 and then scaled as a whole to fit
+whatever panel it lands on, letterboxing the leftover axis. Nothing reflows, so a
+1080p booth TV, a 4K lobby screen and a laptop preview all show the same composition
+rather than three different ones. `useFitScale` computes the factor and `App.tsx`
+applies it across two boxes — a transform does not change an element's layout size,
+so the outer box carries the *scaled* dimensions and the inner one is transformed
+inside it. Centring a 1920-wide box on a narrower screen clamps it to the left edge
+and clips the right, which is the bug that shape avoids.
+
+### What moves
+
+A TV runs for hours, so the motion has to be worth looking at twice and never
+distracting:
+
+- the command line types itself out, holds, erases and repeats;
+- the three photographs drift slowly, each starting at a different point in the cycle;
+- the bands rise in once, in reading order, when the page is first put up.
+
+Two rules the layout depends on. The command line sits in a **fixed-height row** —
+its text span collapses to nothing at the bottom of the erase, and without that height
+the entire column below would jump up with it. And the photographs drift inside
+`overflow-hidden` frames, so nothing they do can move anything else. `prefers-reduced-motion`
+turns all of it off, delays included, and the command line is left complete.
+
+### The accent
+
+The interactives spend ochre on the visitor's own pending action. A poster has no
+visitor action except one — joining — so the accent appears on the `./join` command
+line and the Discord block, and nowhere else. Everything else is ink, hairlines and
+whitespace.
+
+The sponsor wordmarks are the exception to the theme: they are the companies' own
+artwork, drawn in their own dark inks, so they sit on a fixed light tile in both light
+and dark mode. The website does the same thing for the same reason, as does the
+Discord QR, which plenty of scanners will refuse if it is inverted.
+
 ## Where the leaderboards live
+
+(The poster has no leaderboard — it stores nothing at all.)
 
 `localStorage`, in one browser profile, on one machine. Each interactive keeps its
 own board under its own key (`cpatgt:leaderboard:nim.v1`, `…:milk.v1`), so they never
@@ -192,7 +265,8 @@ every respect and still share `AppShell`, `BoothControls`, `ActionBar`, `BoothAt
 `useIdle`, `createLeaderboard` and `checkName`. Where they genuinely differ the shared
 piece takes a prop rather than being forked: `GameOverPanel` and `BoothAttract` take a
 `format`, a `valueLabel` and a `boardHeading`, which is how one ranks on time and the
-other on kits-then-time.
+other on kits-then-time, and `MicroLabel` takes a `size` so the poster can set it for
+a room to read rather than forking the treatment.
 
 ### The design system
 

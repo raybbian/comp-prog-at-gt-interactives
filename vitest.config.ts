@@ -11,6 +11,6 @@ const project = (name: string) => ({
 
 export default defineConfig({
   test: {
-    projects: [project('shared'), project('nim'), project('milk')],
+    projects: [project('shared'), project('nim'), project('milk'), project('poster')],
   },
 });
