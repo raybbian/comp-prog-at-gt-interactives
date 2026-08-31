@@ -231,6 +231,53 @@ before someone tidies the browser mid-event.
 
 `Ctrl` + `Shift` + `K` clears the board of whichever interactive is on screen.
 
+## Deploying
+
+Each interactive is a static bundle with `base: './'` and no backend, so it deploys
+as three independent Cloudflare Pages projects — one per domain, one repo.
+
+| Folder    | Pages project     | Output directory |
+| --------- | ----------------- | ---------------- |
+| `nim/`    | `cpatgt-nim`      | `nim/dist`       |
+| `milk/`   | `cpatgt-milk`     | `milk/dist`      |
+| `poster/` | `cpatgt-poster`   | `poster/dist`    |
+
+`.github/workflows/deploy.yml` runs on every push to `main`: `npm ci`,
+`npm audit signatures`, typecheck, tests, `npm run build`, then one upload per
+project. Pull requests run the same checks and skip the uploads. Node comes from
+`.nvmrc`, so CI and the booth machine build on the same version.
+
+### One-time setup
+
+1. Create the three direct-upload projects:
+
+   ```sh
+   npx wrangler pages project create cpatgt-nim    --production-branch main
+   npx wrangler pages project create cpatgt-milk   --production-branch main
+   npx wrangler pages project create cpatgt-poster --production-branch main
+   ```
+
+2. Cloudflare dashboard → My Profile → API Tokens → create a token with the
+   **Cloudflare Pages: Edit** permission on the account.
+3. GitHub repo → Settings → Secrets and variables → Actions, add
+   `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+4. Per project: Workers & Pages → the project → Custom domains → attach the domain.
+   Cloudflare issues the certificate; a domain outside Cloudflare DNS needs one CNAME
+   pointing at `<project>.pages.dev`.
+
+### Deploying by hand
+
+The workflow is the source of truth, but a single interactive can be pushed straight
+from a laptop — this is also the exact command each workflow step runs:
+
+```sh
+npm run build
+npx wrangler pages deploy nim/dist --project-name=cpatgt-nim --branch=main
+```
+
+Leave `--branch` off and the upload becomes a preview deployment on its own URL,
+which is a safe way to look at something before it reaches the booth domain.
+
 ## Adding an interactive
 
 1. `mkdir <name>` with `src/`, an `index.html`, a `vite.config.ts`, and a `tsconfig.json`

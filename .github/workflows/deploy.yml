@@ -1,0 +1,64 @@
+name: Deploy
+
+# Every push to main rebuilds all three interactives and uploads each one to its
+# own Cloudflare Pages project. Pull requests run the same checks without deploying.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# One deploy at a time; a newer push supersedes an in-flight run.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Exact versions from the committed lockfile. See README.md > Dependency policy.
+      - run: npm ci
+
+      - run: npm audit signatures
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      # Builds all workspaces -> nim/dist, milk/dist, poster/dist
+      - run: npm run build
+
+      - name: Deploy nim
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy nim/dist --project-name=cpatgt-nim --branch=main
+
+      - name: Deploy milk
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy milk/dist --project-name=cpatgt-milk --branch=main
+
+      - name: Deploy poster
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy poster/dist --project-name=cpatgt-poster --branch=main
