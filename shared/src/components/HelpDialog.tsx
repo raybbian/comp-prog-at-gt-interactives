@@ -15,8 +15,8 @@ export type HelpDialogProps = {
 
 /**
  * Native `<dialog>` rather than a hand-rolled overlay: Esc, the focus trap, and the
- * top layer all come for free, and the top layer is what puts it above the pinned
- * QR corner without another z-index to keep in sync.
+ * top layer all come for free, and the top layer is what puts it above the attract
+ * overlay without another z-index to keep in sync.
  */
 export function HelpDialog({ title, topics, onClose }: HelpDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);

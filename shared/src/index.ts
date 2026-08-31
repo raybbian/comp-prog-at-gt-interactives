@@ -7,7 +7,6 @@ export { AttractScreen, type AttractScreenProps } from './components/AttractScre
 export { BoothAttract, type BoothAttractProps } from './components/BoothAttract';
 export { BoothControls, type BoothControlsProps } from './components/BoothControls';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './components/Button';
-export { DiscordCorner } from './components/DiscordCorner';
 export { DiscordQR, type DiscordQRProps } from './components/DiscordQR';
 export { GameOverPanel, type GameOverPanelProps } from './components/GameOverPanel';
 export { HelpDialog, type HelpDialogProps, type HelpTopic } from './components/HelpDialog';

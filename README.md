@@ -69,23 +69,9 @@ npm ci && npm run build && npm run preview:nim
 Open the URL, press F11 for fullscreen, and disable the machine's sleep and screensaver.
 From there it looks after itself:
 
-- 60s untouched mid-game deals a fresh board;
-- 45s untouched after that shows the attract screen with the leaderboard;
+- 120s untouched mid-game deals a fresh board;
+- 90s untouched after that shows the attract screen with the leaderboard;
 - any key, click, or touch starts a new game.
-
-The Discord QR sits in the bottom-right corner of every screen. It is not a link —
-a stray click on a booth screen would navigate the game away — so it only works by
-scanning. To point it somewhere else, edit `INVITE` in `shared/scripts/make-qr.mjs`
-and re-run `node shared/scripts/make-qr.mjs`; that regenerates the committed
-component. It needs the `qrencode` binary (`pacman -S qrencode`) and fetches the CC0
-Discord glyph from simple-icons, but only at generation time — the app itself ships
-the matrix inline and never touches the network.
-
-Verify a regenerated code actually scans before trusting it:
-
-```sh
-zbarimg --raw <screenshot.png>   # must print the invite URL
-```
 
 **`Ctrl` + `Shift` + `K` clears the leaderboard** after a confirmation prompt. It is
 deliberately undiscoverable so visitors do not find it. Nothing else in the UI can
@@ -154,6 +140,21 @@ There is no hint in this interactive.
 Not an interactive — a single 16:9 screen about the club, for a TV that nobody is
 going to touch. It answers "what is this club" for the queue and for anyone walking
 past the table, and carries the Discord QR for whoever wants in.
+
+The QR lives only here — the game screens deliberately carry none, so a visitor
+playing one is not being sold something in the corner of it, and there is exactly one
+thing at the booth to point a phone at. It is not a link — a stray click on a booth
+screen would navigate the page away — so it only works by scanning. To point it somewhere else, edit `INVITE` in
+`shared/scripts/make-qr.mjs` and re-run `node shared/scripts/make-qr.mjs`; that
+regenerates the committed component. It needs the `qrencode` binary
+(`pacman -S qrencode`) and fetches the CC0 Discord glyph from simple-icons, but only at
+generation time — the app itself ships the matrix inline and never touches the network.
+
+Verify a regenerated code actually scans before trusting it:
+
+```sh
+zbarimg --raw <screenshot.png>   # must print the invite URL
+```
 
 **Every word and image on it comes from competitiveprogrammingatgt.com.** Nothing is
 written or drawn for the poster. `src/content.ts` is the whole of the copy, and each
@@ -296,10 +297,6 @@ which is a safe way to look at something before it reaches the booth domain.
 
    The second `@source` is not optional — shared components live outside the package
    root, so without it every class they use is purged from the production build.
-
-Render `<DiscordCorner />` once at the top level, as `nim/src/App.tsx` does — it is
-fixed-position and sits above the attract overlay, so one instance covers every
-screen.
 
 4. Call `useBoothSession` and render `AppShell` + `BoothControls` + `BoothAttract` +
    `GameOverPanel`. Between them that is the leaderboard, the attract overlay, the

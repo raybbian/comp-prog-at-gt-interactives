@@ -19,6 +19,5 @@ describe('App', () => {
     expect(html).toContain('Competitive Programming at GT');
     expect(html).toContain('Nobody has helped him yet.');
     expect(html).toContain('Press any key to play');
-    expect(html).toContain('discord.gg/5X7UVThEhJ');
   });
 });

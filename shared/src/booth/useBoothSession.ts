@@ -6,10 +6,10 @@ import type {
   SubmittedRun,
 } from '../leaderboard/store';
 
-const IDLE_ATTRACT_MS = 45_000;
-const IDLE_MID_GAME_MS = 60_000;
-const IDLE_NAME_ENTRY_MS = 90_000;
-const IDLE_HELP_MS = 120_000;
+const IDLE_ATTRACT_MS = 90_000;
+const IDLE_MID_GAME_MS = 120_000;
+const IDLE_NAME_ENTRY_MS = 180_000;
+const IDLE_HELP_MS = 240_000;
 
 export type UseBoothSessionOptions = {
   board: LeaderboardStore;

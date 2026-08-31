@@ -2,7 +2,6 @@ import {
   AppShell,
   BoothAttract,
   BoothControls,
-  DiscordCorner,
   GameOverPanel,
   HelpDialog,
   Rule,
@@ -252,8 +251,6 @@ export function App() {
           </div>
         )}
       </AppShell>
-
-      <DiscordCorner />
 
       {session.help && (
         <HelpDialog title="How to play" topics={HELP_TOPICS} onClose={session.closeHelp} />
