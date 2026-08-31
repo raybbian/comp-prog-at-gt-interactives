@@ -18,5 +18,11 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meeting"] }],
 
+  // Which meeting this deployment is running. Every team, message and score lives in the
+  // object with this name, so changing it is how you start a new game: the old meeting is
+  // left intact and untouched, and the new one begins empty. Next semester is a one-word
+  // edit rather than a button someone can hit by accident.
+  "vars": { "MEETING_ID": "fall-2026" },
+
   "observability": { "enabled": true }
 }
