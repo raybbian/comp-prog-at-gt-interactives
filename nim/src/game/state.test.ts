@@ -67,6 +67,19 @@ describe('reducer', () => {
     expect(after.lastMove).toEqual({ by: 'bot', move: { row: 2, count: 1 } });
   });
 
+  it('holds the result back until the closing take has left the board', () => {
+    const state: GameState = { ...initialState([0, 0, 2]), phase: 'botThinking' };
+    const after = reducer(state, { type: 'bot', move: { row: 2, count: 2 } });
+
+    expect(after.phase).toBe('lost');
+    expect(after.settled).toBe(false);
+    expect(reducer(after, { type: 'settle' }).settled).toBe(true);
+
+    // Nothing to settle mid-game: the flag only ever opens the result panel.
+    const playing = initialState([1, 4, 6]);
+    expect(reducer(playing, { type: 'settle' })).toBe(playing);
+  });
+
   it('offers a hint only while one exists, and says so when none does', () => {
     const winnable = reducer(initialState([1, 4, 6]), { type: 'hint' });
     expect(winnable.hint).not.toBeNull();

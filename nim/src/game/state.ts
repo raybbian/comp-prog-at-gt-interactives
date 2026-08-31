@@ -20,6 +20,11 @@ export type GameState = {
   hintUsed: boolean;
   /** A hint was asked for in a position that is already lost. */
   hintRefused: boolean;
+  /**
+   * The closing take has finished leaving the board. The result panel replaces the
+   * board, so it has to wait for this or the last stones vanish with it.
+   */
+  settled: boolean;
   startedAt: number | null;
   finishedAt: number | null;
 };
@@ -30,7 +35,8 @@ export type GameAction =
   | { type: 'commit'; selection: Selection }
   | { type: 'tap'; selection: Selection }
   | { type: 'bot'; move: Move }
-  | { type: 'hint' };
+  | { type: 'hint' }
+  | { type: 'settle' };
 
 export function initialState(heaps: Heaps): GameState {
   return {
@@ -43,6 +49,7 @@ export function initialState(heaps: Heaps): GameState {
     hint: null,
     hintUsed: false,
     hintRefused: false,
+    settled: false,
     startedAt: null,
     finishedAt: null,
   };
@@ -126,5 +133,9 @@ export function reducer(state: GameState, action: GameAction): GameState {
         ? { ...state, hint: null, hintUsed: true, hintRefused: true }
         : { ...state, hint: best, hintUsed: true, hintRefused: false };
     }
+
+    case 'settle':
+      if (state.phase !== 'won' && state.phase !== 'lost') return state;
+      return state.settled ? state : { ...state, settled: true };
   }
 }

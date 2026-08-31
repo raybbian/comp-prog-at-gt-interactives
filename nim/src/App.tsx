@@ -28,6 +28,9 @@ import { HELP_TOPICS } from './help';
 const BOT_PAUSE_MS = 520;
 const BOT_PAUSE_REDUCED_MS = 150;
 const STAGGER_MS = 45;
+/** Matches --duration-settle, plus a beat to read the empty board. */
+const STONE_EXIT_MS = 260;
+const OUTRO_PAD_MS = 240;
 
 // One booth, one screen, one of each: no reason for these to live in component state.
 const dealer = createDealer();
@@ -41,6 +44,9 @@ export function App() {
 
   const isPlaying = state.phase === 'playing';
   const isOverGame = state.phase === 'won' || state.phase === 'lost';
+  // The result panel takes the board's place, so it waits for the winning take to
+  // finish leaving; otherwise the last stones — the bot's especially — never show.
+  const showResult = isOverGame && state.settled;
   const elapsedMs = useElapsed(state.startedAt, state.finishedAt);
 
   const deal = useCallback(() => dispatch({ type: 'new', heaps: dealer() }), []);
@@ -65,6 +71,17 @@ export function App() {
     );
     return () => window.clearTimeout(timer);
   }, [state.phase, state.heaps, reducedMotion]);
+
+  useEffect(() => {
+    if (!isOverGame || state.settled) return;
+    const stagger = reducedMotion ? 0 : STAGGER_MS;
+    const count = state.lastMove?.move.count ?? 1;
+    const timer = window.setTimeout(
+      () => dispatch({ type: 'settle' }),
+      (count - 1) * stagger + STONE_EXIT_MS + OUTRO_PAD_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [isOverGame, state.settled, state.lastMove, reducedMotion]);
 
   const commit = useCallback((selection: Selection) => {
     dispatch({ type: 'commit', selection });
@@ -167,9 +184,9 @@ export function App() {
           />
         }
         footer={
-          isOverGame ? undefined : (
+          showResult ? undefined : (
             <MoveBar
-              turnLabel={state.phase === 'botThinking' ? 'Bot' : 'Your turn'}
+              turnLabel={turnLabel(state.phase)}
               detail={describeStatus(state)}
               takeCount={takeCount}
               canCommit={isPlaying && state.selection !== null}
@@ -181,7 +198,7 @@ export function App() {
           )
         }
       >
-        {isOverGame ? (
+        {showResult ? (
           <GameOverPanel
             headline={state.phase === 'won' ? 'You win' : 'Bot wins'}
             won={state.phase === 'won'}
@@ -231,6 +248,12 @@ export function App() {
       )}
     </>
   );
+}
+
+function turnLabel(phase: GameState['phase']): string {
+  if (phase === 'botThinking' || phase === 'lost') return 'Bot';
+  if (phase === 'won') return 'You';
+  return 'Your turn';
 }
 
 function describeStatus({ phase, lastMove, hint, hintRefused }: GameState): string {
