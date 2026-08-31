@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@import '@cpatgt/shared/theme.css';
+@import '@cpatgt/shared/base.css';
+
+/* Shared components live outside this package's root, so Tailwind has to be told
+   to scan them or every class they use is purged from the production build. */
+@source './';
+@source '../../shared/src';
+
+/*
+ * The snake ramp — PUZZLE DATA ONLY.
+ *
+ * These nine values are the picture the game is about, not part of the interface. No
+ * border, label, button, rule, or rail may take one; the only permitted utility is
+ * `bg-snake-*`, and only on a grid cell. The shared ochre accent still means exactly one
+ * thing, and twenty coloured squares on a board must not be allowed to dilute it.
+ *
+ * The ramp is ORDERED, and that is load-bearing rather than decorative. The coloured
+ * round's whole insight is that neighbouring cells along the snake look alike, so the
+ * picture has to *show* that before anyone reasons about it: level 4 sits between 3 and
+ * 5 in lightness and in hue, so a smooth gradient crawling along the body is visible at
+ * a glance.
+ *
+ * Lightness rises with level in BOTH modes — never inverted for dark. The two halves of
+ * a team are looking at different phones, and a ramp that reversed between a light one
+ * and a dark one would have them describing opposite things in the same words. Monotone
+ * lightness is also what keeps the order readable under deuteranopia and protanopia,
+ * with the hue path from indigo through cerulean to sage as a second cue.
+ *
+ * Hues run 265deg to 110deg, well clear of the accent's 35deg — which is why no warm
+ * sequential scale would do, magma and inferno and the warm end of viridis included.
+ *
+ * There is deliberately no token for "empty cell" (`bg-ground-sunken`) or for a
+ * monochrome body cell (`bg-ink`). Adding them would be exactly the palette creep the
+ * README warns about.
+ */
+:root {
+  --snake-1: #3c3f84;
+  --snake-2: #374f95;
+  --snake-3: #2d61a1;
+  --snake-4: #1f72a6;
+  --snake-5: #1b82a3;
+  --snake-6: #26909a;
+  --snake-7: #469c92;
+  --snake-8: #6ba78e;
+  --snake-9: #93b18e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --snake-1: #666dbe;
+    --snake-2: #5f7ec7;
+    --snake-3: #568ecd;
+    --snake-4: #4d9ecf;
+    --snake-5: #4dadcb;
+    --snake-6: #5ab9c1;
+    --snake-7: #74c4b9;
+    --snake-8: #95ceb2;
+    --snake-9: #b5d7b3;
+  }
+}
+
+:root[data-theme='dark'] {
+  --snake-1: #666dbe;
+  --snake-2: #5f7ec7;
+  --snake-3: #568ecd;
+  --snake-4: #4d9ecf;
+  --snake-5: #4dadcb;
+  --snake-6: #5ab9c1;
+  --snake-7: #74c4b9;
+  --snake-8: #95ceb2;
+  --snake-9: #b5d7b3;
+}
+
+@theme inline {
+  --color-snake-1: var(--snake-1);
+  --color-snake-2: var(--snake-2);
+  --color-snake-3: var(--snake-3);
+  --color-snake-4: var(--snake-4);
+  --color-snake-5: var(--snake-5);
+  --color-snake-6: var(--snake-6);
+  --color-snake-7: var(--snake-7);
+  --color-snake-8: var(--snake-8);
+  --color-snake-9: var(--snake-9);
+}
+
+@layer base {
+  /*
+   * Phones, not a booth screen. The bottom of the viewport is where the keypad lives and
+   * also where iOS puts the home indicator and its collapsing URL bar, so every pinned
+   * bar pays the safe-area inset.
+   */
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  .safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+}

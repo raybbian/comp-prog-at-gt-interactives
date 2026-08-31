@@ -8,6 +8,7 @@ outreach. Each one lives in its own folder and shares a single design system.
 | `shared/` | `@cpatgt/shared` — theme, fonts, primitives, hooks, booth session |
 | `nim/`    | Nim against a bot that plays perfectly                           |
 | `milk/`   | Farmer John's contaminated bucket, against an adversary          |
+| `telephone/` | Two phones, eight digits a message, one picture to get across |
 
 ## Getting started
 
@@ -17,6 +18,7 @@ npm ci             # exact versions from the committed lockfile
 npm run dev:nim    # http://localhost:5173
 npm run dev:milk   # http://localhost:5174
 npm run dev:poster # http://localhost:5175
+npm run dev:telephone # http://localhost:5176 — client and worker together
 ```
 
 Other scripts, all from the repo root:
@@ -28,6 +30,7 @@ npm run build      # both interactives -> <name>/dist
 npm run preview:nim    # serves nim/dist    on :4173
 npm run preview:milk   # serves milk/dist   on :4174
 npm run preview:poster # serves poster/dist on :4175
+npm run preview:telephone # serves telephone/dist on :4176 (client only)
 ```
 
 Ports are pinned per folder so they can all run side by side on one booth machine.
@@ -219,9 +222,247 @@ artwork, drawn in their own dark inks, so they sit on a fixed light tile in both
 and dark mode. The website does the same thing for the same reason, as does the
 Discord QR, which plenty of scanners will refuse if it is inverted.
 
+## Telephone
+
+A game for a room, not a booth. Two people to a team, a phone each, and they have to
+split up: one of them is shown a picture and the other has to reproduce it, using
+**messages of at most eight digits, 0 through 9, and nothing else**.
+
+That one restriction is the whole thing. You cannot say "row three is black" — you have
+to agree, in advance, on what a digit is going to mean. Everything the evening is
+actually about follows from teams discovering that their first idea costs five messages
+and their second costs two.
+
+**The game never names its own technique**, for the same reason Nim is only ever called
+the Stone Game: a name on screen is a search term, and the search hands over the answer.
+`App.test.tsx` enforces it by rendering every screen and asserting the words never appear.
+The rounds are numbered and nothing more.
+
+### The snakes
+
+Every picture is a *snake*: one unbroken line of cells that never touches itself. Formally
+it is an induced path — two body cells are adjacent only when they are adjacent along the
+snake — and that rule earns its place three times over. It makes a picture you can trace
+by eye without ambiguity; it makes the traversal order recoverable from the cells alone,
+which is what lets a round hand over a shape without also handing over where it starts;
+and it lets the receiver's editor refuse to draw anything illegal, so a wrong drawing is
+not merely wrong, it is unreachable.
+
+`protocol/paths.ts` holds the one predicate all three depend on, and `generate.test.ts`
+checks every round's generator against it over sixty seeds.
+
+### The rounds
+
+| # | Grid | Snake | Naive costs | A good encoding costs | What the gap is about |
+| - | ---- | ----- | ----------- | --------------------- | --------------------- |
+| 0 | 6x6   | a straight line, in colour | 2 | 1 | nothing — warm-up, and off the record |
+| 1 | 6x6   | 12 cells                   | 5 | 2 | a digit holds 3.3 bits and you are using one |
+| 2 | 8x8   | 20 cells                   | 8 | 2 | send the differences, not the positions |
+| 3 | 10x10 | 30 cells, 9 colours, shape given | 4 | 2 | neighbours look alike, so send the change |
+| 4 | 12x12 | 6 long runs                | 18 | 2 | describe the snake, do not draw it |
+| 5 | 8x8   | 14 cells, one message in five is lost | 3 blind, and hope | 6 | say it twice, or number them and ask |
+
+**Nothing on screen ever states those numbers.** The right-hand column is for whoever is
+running the evening; a target printed on the projector tells a team when to stop thinking,
+and the point is that there is always something better than what you have. Teams find out
+what was possible by watching the standings.
+
+Round 0 exists so that nobody loses. A naive protocol is genuinely good enough there, and
+both phones get to prove they are paired while both people find the keypad and the colour
+ribbon before anything is at stake. It is also the window in which stragglers are still
+joining, which is why it does not count.
+
+**It is deliberately the coloured round as well as the easy one.** The palette is half the
+vocabulary of this game, and meeting it for the first time three rounds in — with a clock
+running and a partner waiting — is the wrong moment to work out what a level is. Round 0
+is where a team learns to draw a snake *and* colour it, for free.
+
+No board is wider than twelve cells, which is the other thing round sizes are chosen for:
+at twelve across, a cell is about 28 points on a phone, and every grid in the game stays
+comfortably tappable without anyone pinching to zoom.
+
+Round 4 is the one to protect if the schedule slips. Round 2's winning trick is several
+times worse there, on a grid that looks superficially similar, which is the lesson that
+generalises: there is no universal answer, you have to look at the source. Round 3 sits
+between them on purpose — having just learned that colour has structure worth exploiting,
+a team meets a shape whose structure is worth exploiting too, and the second insight lands
+as a generalisation of the first rather than as another trick.
+
+Round 5 is the only round with a lossy channel, and that placement is deliberate. A lost
+message in a *sequential* encoding desynchronises everything after it and the receiver
+cannot know, so dropping messages on rounds 2 through 4 would punish the cleverest teams
+hardest. Its payload is a bitmap, which degrades one cell at a time. It is also
+**additive only** — solving it can win a team a place, its message count cannot cost them
+one — because every team loses the same *number* of messages but not the same ones. Flip
+`additiveOnly` in `protocol/rounds.ts` to put it on the board with the rest.
+
+Which messages get dropped is a pure function of `(seed, team, direction, ordinal)` with
+no stored state, so a replay agrees with the live verdict and a test can assert it. It is
+a block quota rather than a coin per message: every team loses exactly one in five, and
+only *which* ones differs. A coin would hand one team three losses and another nine over
+the same twenty messages, and a team already having a bad round does not need variance on
+top.
+
+### Scoring, and why there is no accuracy percentage
+
+A submission is right or it is not. Ranking is **rounds solved, then messages spent, then
+time** — messages ahead of the clock, because messages are the point and the clock is a
+cutoff.
+
+An accuracy percentage was the obvious alternative and it is worse in two ways. It would
+be a gradient to climb: submit, nudge one cell, watch the number move. And the partial
+credit it buys is not needed, because **both halves of a team can read the full log of
+what they sent and what arrived**. "I sent 4 7 1" against "I got 4 7 4" is a debuggable
+conversation; "you scored 61%" is not. That is what makes exact-match fair here rather
+than harsh — every failure is diagnosable without either partner seeing the other's
+screen. On the lossy round, holding the two logs side by side *is* the exercise.
+
+Submitting is therefore free and unlimited, and only the last one counts. One bit of "not
+yet" gives no purchase on a thirty-six bit space, so there is nothing to protect and no
+reason to make anyone live with a typo at 4:58.
+
+### What the server will not tell you
+
+Two invariants, and both are types rather than filters, so breaking one is a compile
+error rather than something a review has to catch:
+
+- **`ReceiverView` has no `target` field.** A receiver with devtools open reads every byte
+  the server sends them; if the answer were anywhere in the payload the game would be
+  over, and nobody would find out until a student mentioned it afterwards.
+- **No view either player can read carries `delivered`.** On the lossy round the sender
+  genuinely cannot tell a message that arrived from one that did not, and that ambiguity
+  is the lesson.
+
+`worker/game.test.ts` stringifies both views and asserts the answer is not in there, for
+every round, in case a future field smuggles it out.
+
+### Running it
+
+```sh
+npm run dev:telephone
+```
+
+That starts Vite on 5176 and `wrangler dev` on 8787 together, with `/api` proxied across.
+Three screens, all on one origin:
+
+| Route      | Who                                                       |
+| ---------- | --------------------------------------------------------- |
+| `#/`       | the phones — which half you get is decided by the server   |
+| `#/host`   | the projector: standings, the clock, the round controls    |
+| `#/brief`  | the projector before the game: join URL, rules, samples    |
+
+Routing is on the hash, not the path. Every workspace here builds with `base: './'`, so a
+visit to `/host/` would resolve `./assets/index-abc.js` against `/host/` and the page
+would fail to load its own JavaScript.
+
+**The host screen is driven from the keyboard**, like a slide deck — a host clicking
+buttons means the whole room watching someone hunt for a cursor.
+
+| Key | |
+| --- | --- |
+| `→` / `←` | next / previous stage: brief, play, reveal, next round |
+| `Space` | pause and resume the clock |
+| `+` / `−` | add or take 30 seconds |
+| `Ctrl` `Shift` `K` | reset the whole event, behind a confirmation |
+
+The board needs a host key. Set `HOST_KEY` as a secret and open `#/host?k=<key>`; the
+client swaps it for a cookie and wipes it out of the address bar, which is on a projector
+in front of everyone. Without `HOST_KEY` set, the object generates one and logs it —
+visible in `wrangler tail`, or in the dev console. Unauthenticated host routes answer 404
+rather than 403, so poking at them tells you nothing.
+
+For local work, `telephone/.dev.vars` (gitignored) holds `HOST_KEY=dev-host-key`.
+
+`npm run preview:telephone` serves only the built client, with no API behind it. It is
+useful for looking at a screen, not for playing — use `npm run dev:telephone` for that.
+
+### Where Telephone's state lives
+
+Not `localStorage`. One **Durable Object** per meeting: a single-threaded, globally unique
+actor holding every team, message and round in memory, with durable storage underneath.
+That is the "one long-running process" model the game needs, without a laptop under the
+projector that has to be kept awake — and because it is single-threaded, two phones on the
+same team can never interleave halfway through a mutation.
+
+Teams are stored one key at a time rather than as one blob; a Durable Object value is
+capped well below what twenty teams' message logs come to by the end of an evening.
+
+`MEETING_ID` picks which meeting a deployment is running. A new name is a clean slate, so
+next semester is a variable rather than a reset button.
+
+### Sessions, and why they travel twice
+
+A session is set as an `HttpOnly` cookie *and* sent as an `x-tel-session` header on every
+request. That is not belt-and-braces for its own sake — each covers a case the other
+cannot. `EventSource` cannot set a header, so the stream needs the cookie; and a phone
+will refuse a `Secure` cookie over plain HTTP, which is exactly what
+`http://<laptop-ip>:5176` is when you are testing on the LAN. (`localhost` is exempt from
+that rule, which is why it only ever broke on a real phone.) iOS also evicts cookies on
+its own schedule, so `localStorage` holds the durable copy.
+
+The cookie is marked `Secure` only when the request arrived over HTTPS, so production keeps
+the property and local testing works.
+
+If the server ever refuses a session outright, the client says so and offers the way back
+in. It does not sit on a spinner: the join code is stable across restarts and redeploys, so
+recovering is always "type your code again".
+
+### The event stream
+
+Server-sent events, with polling underneath. The mental model that keeps it honest:
+**`GET /api/view` is how a client learns the state, and the stream is a latency
+optimisation that lets it skip a poll.** Both return the identical payload — a full
+snapshot of everything that session may see, never a delta — so there is one code path to
+test, a dropped event cannot desync anyone, and a reconnect needs no replay buffer because
+the first event after it *is* the truth.
+
+It is SSE rather than WebSockets for one reason: `EventSource` reconnects by itself and a
+WebSocket does not, and the failure this design actually has to survive is forty phones
+locking their screens. The client polls every twenty seconds while the stream is healthy
+and every three while it is not, resyncs whenever the page comes back to the foreground,
+and shows a small dot in the top rail so a volunteer can tell "streaming" from "polling,
+and fine" without guessing.
+
+### On a phone
+
+Everything except the projector is used one-handed, standing, by someone talking to a
+partner across the room. So: no system keyboard anywhere except the one team-name field
+(a custom keypad enforces the alphabet instead of asking for it, and iOS's keyboard would
+eat half the viewport); `dvh` rather than `vh` and a safe-area inset on every pinned bar;
+actions at the bottom, in the thumb arc; the drawing autosaved to `sessionStorage` on
+every change so a locked phone loses nothing; undo at least thirty deep with a whole drag
+as one entry; and Clear behind a confirmation, nowhere near Submit.
+
+The drag-paint pointer handling is lifted from `milk/src/components/LoadingGrid.tsx` —
+`releasePointerCapture` on `pointerdown`, because touch's implicit capture would otherwise
+stop every cell but the first from ever seeing the drag.
+
+On the round where the shape is already known, the main surface is not the grid at all but
+a ribbon of the snake in path order with a cursor, so decoding is "advance, press plus or
+minus" rather than hunting a 23-pixel target in two dimensions. The physical act of
+filling it in matches the structure of the message.
+
+### The colour ramp
+
+`telephone/src/app.css` adds nine tokens the shared theme does not have, and they are
+**puzzle data only** — `bg-snake-*` on a grid cell, never a border, label, button or rule.
+The shared accent still means exactly one thing, and twenty coloured squares on a board
+must not be allowed to dilute it.
+
+The ramp is *ordered*, and that is load-bearing rather than decorative: the coloured
+round's whole insight is that neighbouring cells look alike, so the picture has to show it
+before anyone reasons about it. Lightness rises with level in both light and dark — never
+inverted for dark mode, because the two halves of a team are looking at different phones
+and a ramp that reversed between them would have them describing opposite things in the
+same words. That monotonicity is also what keeps the order readable for colourblind
+viewers, with the hue path from indigo through cerulean to sage as a second cue. The hues
+run 265° to 110°, well clear of the accent's 35°, which is why no warm sequential scale
+would do.
+
 ## Where the leaderboards live
 
-(The poster has no leaderboard — it stores nothing at all.)
+(The poster has no leaderboard — it stores nothing at all, and Telephone's standings
+live in its Durable Object rather than in any browser.)
 
 `localStorage`, in one browser profile, on one machine. Each interactive keeps its
 own board under its own key (`cpatgt:leaderboard:nim.v1`, `…:milk.v1`), so they never
@@ -242,6 +483,16 @@ as three independent Cloudflare Pages projects — one per domain, one repo.
 | `nim/`    | `cpatgt-nim`      | `nim/dist`       |
 | `milk/`   | `cpatgt-milk`     | `milk/dist`      |
 | `poster/` | `cpatgt-poster`   | `poster/dist`    |
+
+Telephone is the exception: it has server state, so it is a **Worker** with a Durable
+Object rather than a Pages project, and it serves its own client from `telephone/dist`
+on the same origin as `/api`. It deploys with `wrangler deploy` from `telephone/`, which
+the workflow does as a fourth step.
+
+Two things it needs that the Pages projects do not: the API token wants **Workers
+Scripts: Edit** alongside Pages: Edit, and `HOST_KEY` has to be set once —
+`npx wrangler secret put HOST_KEY` from `telephone/` — or the host key changes under the
+projector whenever the object is recreated.
 
 `.github/workflows/deploy.yml` runs on every push to `main`: `npm ci`,
 `npm audit signatures`, typecheck, tests, `npm run build`, then one upload per
@@ -341,7 +592,9 @@ save-exact=true         # no ^ ranges; the lockfile is the truth
 dependencies.
 
 The surface is kept deliberately small — **react and react-dom are the only runtime
-dependencies**, and the dev toolchain is vite, typescript, tailwind, vitest and types.
+dependencies**, and the dev toolchain is vite, typescript, tailwind, vitest, wrangler and
+types. Telephone's worker adds no runtime dependency either: it is `fetch` and a Durable
+Object, and the event stream is a `TransformStream` rather than a websocket library.
 No router, no state library, no animation library, no UI kit. If a new dependency
 looks necessary, check first whether fifty lines in `shared/` would do instead; that
 is where `cn`, `formatDuration`, and the leaderboard store came from.

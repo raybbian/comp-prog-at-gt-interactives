@@ -11,6 +11,11 @@ export type AppShellProps = {
   footer?: ReactNode;
   /** Width of the centred column, e.g. 'max-w-xl'. Rails always span the screen. */
   contentClassName?: string;
+  /**
+   * Where the column sits vertically. Booth screens centre; a phone holding a grid and
+   * a pinned keypad must not, or the top of the picture goes off the top of the screen.
+   */
+  align?: 'center' | 'start';
   children: ReactNode;
 };
 
@@ -24,6 +29,7 @@ export function AppShell({
   trailing,
   footer,
   contentClassName = 'max-w-3xl',
+  align = 'center',
   children,
 }: AppShellProps) {
   return (
@@ -36,7 +42,12 @@ export function AppShell({
         <div className="flex items-center gap-4">{trailing}</div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 py-10 md:px-10">
+      <main
+        className={cn(
+          'flex flex-1 flex-col items-center px-6 md:px-10',
+          align === 'center' ? 'justify-center py-10' : 'justify-start py-6',
+        )}
+      >
         <div className={cn('w-full', contentClassName)}>{children}</div>
       </main>
 

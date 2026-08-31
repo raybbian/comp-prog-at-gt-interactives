@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cpatgt-telephone",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // The built client is served by the same worker that serves /api, so the whole game
+  // lives on one origin. Sessions are stored in cookies and localStorage, both of which
+  // are origin-scoped, and a second origin would mean every phone in the room losing its
+  // seat at once.
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+
+  // One meeting, one object: a single-threaded actor holding every team, message and
+  // round in memory, with durable storage underneath it. This is the "one long-running
+  // process" model without a laptop under the projector to keep awake.
+  "durable_objects": {
+    "bindings": [{ "name": "MEETING", "class_name": "Meeting" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meeting"] }],
+
+  "observability": { "enabled": true }
+}

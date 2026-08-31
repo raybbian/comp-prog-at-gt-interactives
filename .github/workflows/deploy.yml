@@ -1,7 +1,9 @@
 name: Deploy
 
-# Every push to main rebuilds all three interactives and uploads each one to its
-# own Cloudflare Pages project. Pull requests run the same checks without deploying.
+# Every push to main rebuilds every interactive and uploads it. The three static ones
+# are Cloudflare Pages projects; Telephone keeps server state, so it is a Worker with a
+# Durable Object and deploys with `wrangler deploy` instead. Pull requests run the same
+# checks without deploying.
 on:
   push:
     branches: [main]
@@ -36,7 +38,7 @@ jobs:
 
       - run: npm test
 
-      # Builds all workspaces -> nim/dist, milk/dist, poster/dist
+      # Builds all workspaces -> nim/dist, milk/dist, poster/dist, telephone/dist
       - run: npm run build
 
       - name: Deploy nim
@@ -62,3 +64,16 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy poster/dist --project-name=cpatgt-poster --branch=main
+
+      # Not a Pages project: Telephone serves its own client from the same worker that
+      # serves /api, so that the game lives on one origin. Sessions are held in a cookie
+      # and in localStorage, both origin-scoped, and a second origin would mean every
+      # phone in the room losing its seat at once.
+      - name: Deploy telephone
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: telephone
+          command: deploy

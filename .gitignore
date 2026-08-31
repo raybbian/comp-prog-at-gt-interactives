@@ -26,3 +26,7 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Cloudflare local secrets
+.dev.vars
+.wrangler/

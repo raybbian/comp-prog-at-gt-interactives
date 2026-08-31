@@ -25,6 +25,7 @@ export {
 } from './booth/useBoothSession';
 
 export { useElapsed } from './hooks/useElapsed';
+export { useFitScale } from './hooks/useFitScale';
 export { useIdle, type UseIdleOptions } from './hooks/useIdle';
 export { useMediaQuery } from './hooks/useMediaQuery';
 export { usePointerKind, type PointerKind } from './hooks/usePointerKind';

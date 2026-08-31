@@ -1,4 +1,4 @@
-import { MicroLabel, Rule } from '@cpatgt/shared';
+import { MicroLabel, Rule, useFitScale } from '@cpatgt/shared';
 import logoUrl from '@cpatgt/shared/assets/logo.png';
 import { Hero } from './components/Hero';
 import { IcpcRecord } from './components/IcpcRecord';
@@ -8,7 +8,6 @@ import { Placements } from './components/Placements';
 import { Reveal } from './components/Reveal';
 import { WhatWeDo } from './components/WhatWeDo';
 import { site } from './content';
-import { useFitScale } from './hooks/useFitScale';
 
 /**
  * The poster is composed once at 1920x1080 and scaled to whatever panel it lands on,

@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { cn } from '../cn';
 
-/** `lg` is for screens read from across a room; `sm` is the interactive default. */
-export type MicroLabelSize = 'sm' | 'lg';
+/**
+ * `sm` is the interactive default, `lg` is for screens read from across a room, and `xl`
+ * is for a projector at the back of a lecture hall, where 16px is simply not there.
+ */
+export type MicroLabelSize = 'sm' | 'lg' | 'xl';
 
 export type MicroLabelProps = {
   children: ReactNode;
@@ -14,6 +17,7 @@ export type MicroLabelProps = {
 const SIZES: Record<MicroLabelSize, string> = {
   sm: 'text-micro',
   lg: 'text-[1rem] leading-none tracking-[0.14em]',
+  xl: 'text-[1.75rem] leading-none tracking-[0.14em]',
 };
 
 /** Uppercase, tracked, small. Carries structure without adding weight or rules. */
