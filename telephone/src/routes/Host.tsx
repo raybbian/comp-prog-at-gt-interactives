@@ -55,7 +55,11 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
       if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         if (window.confirm('Reset the whole event? Every team and score is erased.')) {
-          void meeting.send('/host/reset', { confirmTeamCount: view.teamCount });
+          void meeting.send('/host/reset', { confirmTeamCount: view.teamCount }).then((reply) => {
+            // Silence used to be indistinguishable from success here, which is the worst
+            // possible feedback for a key you press when you need a clean slate.
+            if (!reply.ok) window.alert(reply.message);
+          });
         }
         return;
       }
@@ -184,7 +188,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
             <span className="font-mono">
               {host} · room {view.room}
             </span>
-            <span>→ next · ← back · space pause · +/− 30s</span>
+            <span>→ next · ← back · space pause · +/− 30s · ctrl+shift+K erase</span>
             <span className={cn(unpaired.length > 0 && 'text-ink')}>
               {unpaired.length === 0
                 ? 'all teams paired'

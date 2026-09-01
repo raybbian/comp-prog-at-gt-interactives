@@ -51,6 +51,19 @@ export function useRoute(): { route: Route; go: (to: Route['kind']) => void } {
  * it — `#/host?r=482913` for the projector, `#/?r=482913` behind a QR code. It is not a
  * secret; it is on a wall in front of the room.
  */
+/**
+ * `#/host?new` starts a meeting even though this tab already remembers one.
+ *
+ * Without it the only way to a fresh code is a brand new tab, because the room is kept in
+ * `sessionStorage` and deleting the code from the address bar just falls back to it —
+ * which looks exactly like the code being impossible to change.
+ */
+export function wantsNewRoom(): boolean {
+  if (typeof window === 'undefined') return false;
+  const query = window.location.hash.split('?')[1] ?? '';
+  return new URLSearchParams(query).has('new');
+}
+
 export function roomFromUrl(): string | null {
   if (typeof window === 'undefined') return null;
   const query = window.location.hash.split('?')[1] ?? '';

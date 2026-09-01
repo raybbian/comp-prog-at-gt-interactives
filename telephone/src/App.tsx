@@ -8,7 +8,7 @@ import { Receiver } from './routes/Receiver.tsx';
 import { Sender } from './routes/Sender.tsx';
 import { RoomGate, RoomGone } from './routes/RoomGate.tsx';
 import { useMeeting, useWakeLock } from './state/useMeeting.ts';
-import { roomFromUrl, useRoute } from './state/useHashRoute.ts';
+import { roomFromUrl, useRoute, wantsNewRoom } from './state/useHashRoute.ts';
 import {
   enterRoom,
   forgetRoom,
@@ -55,7 +55,7 @@ function HostScreen() {
 
   useEffect(() => {
     void (async () => {
-      const existing = roomFromUrl() ?? recallRoom('tab');
+      const existing = wantsNewRoom() ? null : (roomFromUrl() ?? recallRoom('tab'));
       const code = existing ?? (await openRoom().then((r) => (r.ok ? r.data.room : null)));
       if (code === null) {
         setReady(false);

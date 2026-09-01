@@ -318,8 +318,14 @@ export class Meeting implements DurableObject {
       }
 
       if (path === '/host/reset' && request.method === 'POST') {
-        if (num(body, 'confirmTeamCount', -1) !== Object.keys(this.#state.teams).length) {
-          return problem('bad_request', 'Team count did not match.');
+        const teams = Object.keys(this.#state.teams).length;
+        if (num(body, 'confirmTeamCount', -1) !== teams) {
+          // A team joining between the board's last update and the keypress is enough to
+          // land here, so the message has to say what to do rather than just "no".
+          return problem(
+            'bad_request',
+            `The board has ${teams} teams now, not what this screen was showing. Nothing was erased — try again.`,
+          );
         }
         resetMeeting(this.#state, newSeed());
         await this.ctx.storage.deleteAll();

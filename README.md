@@ -371,7 +371,18 @@ buttons means the whole room watching someone hunt for a cursor.
 | `→` / `←` | next / previous stage: brief, play, reveal, next round |
 | `Space` | pause and resume the clock |
 | `+` / `−` | add or take 30 seconds |
-| `Ctrl` `Shift` `K` | reset the whole event, behind a confirmation |
+| `Ctrl` `Shift` `K` | erase the meeting — every team, message and score — behind a confirmation |
+
+Erasing keeps the room code, so nobody staring at the projector is stranded; it rerolls
+the puzzle seed, so the pictures change too. It is refused if teams have joined since the
+board last updated, which is a real race at a twenty-team join stampede — the refusal says
+so rather than doing nothing, because silence there is indistinguishable from success.
+
+**`#/host?new` starts a different meeting** and mints a new code. The room this tab is on
+lives in `sessionStorage`, which is why a reload comes back to the same board and why
+deleting the code out of the address bar does not escape it: with no code in the URL the
+tab falls back to what it remembers. `?new` is the way to say you meant it, and a fresh
+browser tab works for the same reason.
 
 **Opening `#/host` opens a meeting**, and mints the six-digit room code the board then
 puts on the wall. Opening it a second time opens a second meeting with a second code, the

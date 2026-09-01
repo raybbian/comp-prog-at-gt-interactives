@@ -168,24 +168,3 @@ export function newMessageId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/**
- * The receiver's canvas, kept locally as well as on the server.
- *
- * A phone that locks and reloads mid-round must not lose five minutes of painting, and
- * the round trip to restore it from the server is one the player should never notice.
- */
-export function stashGrid(roundId: string, grid: string): void {
-  try {
-    window.sessionStorage.setItem(`cpatgt:telephone:grid:${roundId}`, grid);
-  } catch {
-    // The server copy is authoritative; this is only a faster path back.
-  }
-}
-
-export function unstashGrid(roundId: string): string | null {
-  try {
-    return window.sessionStorage.getItem(`cpatgt:telephone:grid:${roundId}`);
-  } catch {
-    return null;
-  }
-}

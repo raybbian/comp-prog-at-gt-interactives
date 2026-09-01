@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type Size, bodyCells, paint } from '../protocol/grid.ts';
 import { canExtend, orderPath } from '../protocol/paths.ts';
-import { stashGrid, unstashGrid } from '../transport/client.ts';
 
 /**
  * The receiver's drawing, and the rules that stop it going wrong.
@@ -50,9 +49,12 @@ export function useSnakeEditor(options: {
 }): SnakeEditor {
   const { size, roundId, levels: levelCount, fixedPath, serverGrid } = options;
 
+  // The server's copy, always. It is pushed on every change, it arrives with the view
+  // before this hook is ever mounted, and it is the only copy that belongs to *this*
+  // meeting — a local one keyed by round id outlives a reset and quietly restores a
+  // drawing from the event before.
   const seed = useCallback((): Snapshot => {
-    const stashed = unstashGrid(roundId);
-    const source = stashed ?? serverGrid;
+    const source = serverGrid;
     if (fixedPath !== null) {
       return {
         path: [...fixedPath],
@@ -89,10 +91,6 @@ export function useSnakeEditor(options: {
     () => paint(size, snapshot.path, snapshot.levels),
     [size, snapshot.levels, snapshot.path],
   );
-
-  useEffect(() => {
-    stashGrid(roundId, grid);
-  }, [grid, roundId]);
 
   const commit = useCallback((next: Snapshot, newStroke: boolean) => {
     setSnapshot((current) => {
