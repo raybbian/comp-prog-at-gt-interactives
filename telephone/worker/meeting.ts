@@ -8,6 +8,11 @@
  *
  * Everything interesting happens in `actions.ts` and `views.ts`. This file is transport:
  * routing, cookies, the event stream, storage, and the alarm that ends a round.
+ *
+ * An object exists for every name that has ever been fetched, so "does this room exist"
+ * cannot be answered by whether the object is there — it is answered by whether the object
+ * has ever been opened. Until then it refuses everything but `/__open`, which is what
+ * stops a mistyped code from dropping a player into an empty meeting of their own.
  */
 
 
@@ -19,7 +24,7 @@ import {
   createTeam,
   join,
   leave,
-  newHostKey,
+  newSeed,
   nudge,
   paint,
   resetMeeting,
@@ -29,7 +34,6 @@ import {
   togglePause,
 } from './actions.ts';
 import {
-  HOST_COOKIE,
   SESSION_COOKIE,
   SESSION_HEADER,
   SSE_HEADERS,
@@ -60,12 +64,11 @@ export class Meeting implements DurableObject {
   #state: State;
   #clients = new Set<Client>();
   #heartbeat: ReturnType<typeof setInterval> | null = null;
+  /** Whether this code has ever been handed out as a room. */
+  #open = false;
 
-  constructor(
-    private readonly ctx: DurableObjectState,
-    private readonly env: { HOST_KEY?: string },
-  ) {
-    this.#state = { meta: freshMeta(newHostKey(), 'unseeded'), teams: {} };
+  constructor(private readonly ctx: DurableObjectState) {
+    this.#state = { meta: freshMeta('000000', 'unopened'), teams: {} };
     ctx.blockConcurrencyWhile(async () => {
       await this.#load();
     });
@@ -74,21 +77,8 @@ export class Meeting implements DurableObject {
   async #load(): Promise<void> {
     const stored = await this.ctx.storage.list<unknown>();
     const meta = stored.get('meta');
-    if (meta !== undefined) {
-      this.#state.meta = meta as State['meta'];
-    } else {
-      const generated = this.env.HOST_KEY ?? newHostKey();
-      this.#state.meta = freshMeta(generated, newHostKey());
-      if (this.env.HOST_KEY === undefined) {
-        // Otherwise the key exists only inside this object and the host can never open
-        // the board. Set HOST_KEY as a secret in production; this line is the escape
-        // hatch, and shows up in `wrangler tail` and in the dev console.
-        console.log(`telephone: host board at /#/host?k=${generated}`);
-      }
-    }
-    // A host key from the environment survives even a wiped object, so the projector's
-    // link does not change under the host mid-meeting.
-    if (this.env.HOST_KEY !== undefined) this.#state.meta.hostKey = this.env.HOST_KEY;
+    this.#open = meta !== undefined;
+    if (meta !== undefined) this.#state.meta = meta as State['meta'];
 
     for (const [key, value] of stored) {
       if (key.startsWith('team:')) this.#state.teams[key.slice(5)] = value as Team;
@@ -221,10 +211,25 @@ export class Meeting implements DurableObject {
     // cookie was refused; the cookie is what keeps the event stream working, since
     // `EventSource` cannot send a header.
     const sessionId = cookie(request, SESSION_COOKIE) ?? request.headers.get(SESSION_HEADER);
-    const isHost =
-      cookie(request, HOST_COOKIE) === this.#state.meta.hostKey ||
-      request.headers.get(SESSION_HEADER) === this.#state.meta.hostKey;
     const body = request.method === 'POST' ? await readJson(request) : {};
+
+    /* --- opening the room -------------------------------------------------- */
+
+    // Only the worker can reach this, and only once: the reply is what tells it whether
+    // the code it picked was free.
+    if (path === '/__open') {
+      // Not a `problem()`: this is a handshake with the worker, which only reads the
+      // status, and an internal-only failure has no business in the client's `ErrorCode`.
+      if (this.#open) return json({ ok: false }, 409);
+      this.#open = true;
+      this.#state.meta = freshMeta(str(body, 'room'), newSeed());
+      await this.#save();
+      return json({ ok: true, room: this.#state.meta.room });
+    }
+
+    if (!this.#open) return problem('no_room', 'No meeting with that code.');
+
+    const base = `/api/r/${this.#state.meta.room}`;
 
     /* --- open to anyone ---------------------------------------------------- */
 
@@ -232,6 +237,7 @@ export class Meeting implements DurableObject {
       const lobby: Lobby = {
         kind: 'lobby',
         serverTime: now,
+        room: this.#state.meta.room,
         phase: this.#state.meta.phase,
         roundIndex: this.#state.meta.roundIndex < 0 ? null : this.#state.meta.roundIndex,
         teamCount: Object.keys(this.#state.teams).length,
@@ -270,24 +276,28 @@ export class Meeting implements DurableObject {
       return json(
         { ok: true, sessionId: joined.value.sessionId, role, view },
         200,
-        { 'set-cookie': setCookie(SESSION_COOKIE, joined.value.sessionId, SESSION_MAX_AGE, secure) },
+        {
+          'set-cookie': setCookie(
+            SESSION_COOKIE,
+            joined.value.sessionId,
+            SESSION_MAX_AGE,
+            secure,
+            base,
+          ),
+        },
       );
     }
 
     /* --- host -------------------------------------------------------------- */
 
-    if (path === '/host/claim' && request.method === 'POST') {
-      if (str(body, 'hostKey') !== this.#state.meta.hostKey) {
-        return problem('not_host', 'Not found.');
-      }
-      return json({ ok: true, view: buildHostView(this.#state, url.origin, now) }, 200, {
-        'set-cookie': setCookie(HOST_COOKIE, this.#state.meta.hostKey, SESSION_MAX_AGE, secure),
-      });
-    }
-
+    /*
+     * Deliberately unauthenticated. The board is a projector in a room the host is
+     * standing in, and the only thing a key ever bought was stopping someone in that room
+     * from opening the same URL — a social problem, priced at a Cloudflare secret that had
+     * to be set before the one evening it mattered. What a stranger must not be handed is
+     * a live team's join code, and that is `buildHostView`'s job, not a gate's.
+     */
     if (path.startsWith('/host/')) {
-      if (!isHost) return problem('not_host', 'Not found.');
-
       if (path === '/host/view') return json({ ok: true, view: buildHostView(this.#state, url.origin, now) });
       if (path === '/host/events') return this.#stream(request, null, true);
 
@@ -311,13 +321,13 @@ export class Meeting implements DurableObject {
         if (num(body, 'confirmTeamCount', -1) !== Object.keys(this.#state.teams).length) {
           return problem('bad_request', 'Team count did not match.');
         }
-        resetMeeting(this.#state, newHostKey());
+        resetMeeting(this.#state, newSeed());
         await this.ctx.storage.deleteAll();
         await this.#saveAll();
         this.#broadcast();
         return json({ ok: true, view: buildHostView(this.#state, url.origin, now) });
       }
-      return problem('not_host', 'Not found.');
+      return problem('bad_request', 'No such endpoint.');
     }
 
     /* --- players ----------------------------------------------------------- */
@@ -333,7 +343,7 @@ export class Meeting implements DurableObject {
           ? buildSenderView(this.#state, active.value.team, now)
           : buildReceiverView(this.#state, active.value.team, now);
       return json({ ok: true, sessionId: id, role: active.value.role, view }, 200, {
-        'set-cookie': setCookie(SESSION_COOKIE, id, SESSION_MAX_AGE, secure),
+        'set-cookie': setCookie(SESSION_COOKIE, id, SESSION_MAX_AGE, secure, base),
       });
     }
 

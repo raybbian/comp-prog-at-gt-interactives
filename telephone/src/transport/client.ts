@@ -8,20 +8,39 @@
 
 import type { ErrorCode } from '../protocol/codes.ts';
 
-export const API = '/api';
+/**
+ * Every request but minting belongs to one room, and a tab only ever has one: the board
+ * talks to the meeting it opened, a phone to the meeting it joined. So the code is set
+ * once at boot and read here, rather than threaded as an argument through every call,
+ * every hook and every route that has no other reason to know about it.
+ */
+let room: string | null = null;
 
-const SESSION_KEY = 'cpatgt:telephone:session.v1';
+export function enterRoom(code: string): void {
+  room = code;
+}
+
+export function apiBase(): string {
+  return room === null ? '/api' : `/api/r/${room}`;
+}
+
+/** Minting is the one call that predates a room, so it names its own path. */
+export async function openRoom(): Promise<Reply<{ room: string }>> {
+  return request<{ room: string }>('/rooms', { method: 'POST' }, '/api');
+}
+
+const ROOM_KEY = 'cpatgt:telephone:room.v1';
 
 export type Reply<T> = { ok: true; data: T } | { ok: false; error: ErrorCode; message: string };
 
-async function request<T>(path: string, init?: RequestInit): Promise<Reply<T>> {
+async function request<T>(path: string, init?: RequestInit, base = apiBase()): Promise<Reply<T>> {
   try {
     // The cookie is the primary credential, but a phone on a plain-HTTP origin refuses a
     // Secure cookie and iOS evicts cookies on its own schedule, so every request also
     // carries the session in a header. Fetch can do that; `EventSource` cannot, which is
     // why the stream still depends on the cookie and the polling fallback covers it.
     const session = recallSession();
-    const response = await fetch(`${API}${path}`, {
+    const response = await fetch(`${base}${path}`, {
       credentials: 'same-origin',
       ...init,
       headers: {
@@ -42,16 +61,61 @@ async function request<T>(path: string, init?: RequestInit): Promise<Reply<T>> {
   }
 }
 
-export function get<T>(path: string): Promise<Reply<T>> {
-  return request<T>(path);
+/** `base` is only ever passed to reach a room this tab has not entered yet. */
+export function get<T>(path: string, base?: string): Promise<Reply<T>> {
+  return request<T>(path, undefined, base ?? apiBase());
 }
 
-export function post<T>(path: string, body: unknown = {}): Promise<Reply<T>> {
-  return request<T>(path, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+export function post<T>(path: string, body: unknown = {}, base?: string): Promise<Reply<T>> {
+  return request<T>(
+    path,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    base ?? apiBase(),
+  );
+}
+
+/**
+ * Which room this browser is in.
+ *
+ * The board keeps its code in `sessionStorage` and a phone keeps its in `localStorage`,
+ * and that difference is the whole feature. `sessionStorage` belongs to one tab: reloading
+ * the board — or the projector cable being pulled — comes back to the same meeting, while
+ * a second tab starts with an empty store and therefore opens a second meeting, which is
+ * exactly what the code on screen promises. A phone must do the opposite and survive being
+ * closed entirely, so it gets the store that outlives the tab.
+ */
+export type RoomScope = 'tab' | 'device';
+
+function store(scope: RoomScope): Storage {
+  return scope === 'tab' ? window.sessionStorage : window.localStorage;
+}
+
+export function rememberRoom(code: string, scope: RoomScope): void {
+  try {
+    store(scope).setItem(ROOM_KEY, code);
+  } catch {
+    // Private mode, or site data switched off. The code stays in the URL either way.
+  }
+}
+
+export function recallRoom(scope: RoomScope): string | null {
+  try {
+    return store(scope).getItem(ROOM_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function forgetRoom(scope: RoomScope): void {
+  try {
+    store(scope).removeItem(ROOM_KEY);
+  } catch {
+    // Nothing to do; the server will refuse the room anyway.
+  }
 }
 
 /**
@@ -60,10 +124,18 @@ export function post<T>(path: string, body: unknown = {}): Promise<Reply<T>> {
  * The cookie is what authenticates the event stream — `EventSource` cannot set a header,
  * and a token in the query string would land in every access log. This copy is what gets
  * the phone back in when iOS decides to evict the cookie, which it does.
+ *
+ * Keyed by room for the same reason the cookie is scoped to one: a phone that played in an
+ * earlier meeting must not offer that meeting's session to this one and be told, at the
+ * worst possible moment, that it has lost a seat it never had.
  */
+function sessionKey(): string {
+  return `cpatgt:telephone:session.${room ?? 'none'}`;
+}
+
 export function rememberSession(id: string): void {
   try {
-    window.localStorage.setItem(SESSION_KEY, id);
+    window.localStorage.setItem(sessionKey(), id);
   } catch {
     // Private mode, or a browser with site data switched off. The cookie still works.
   }
@@ -71,7 +143,7 @@ export function rememberSession(id: string): void {
 
 export function recallSession(): string | null {
   try {
-    return window.localStorage.getItem(SESSION_KEY);
+    return window.localStorage.getItem(sessionKey());
   } catch {
     return null;
   }
@@ -79,7 +151,7 @@ export function recallSession(): string | null {
 
 export function forgetSession(): void {
   try {
-    window.localStorage.removeItem(SESSION_KEY);
+    window.localStorage.removeItem(sessionKey());
   } catch {
     // Nothing to do; the server will refuse the session anyway.
   }

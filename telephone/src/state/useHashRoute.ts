@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { isRoomCode } from '../protocol/codes.ts';
 
 /**
  * Hash routing, in about twenty lines and with no dependency — `cn` and `formatDuration`
@@ -46,14 +47,13 @@ export function useRoute(): { route: Route; go: (to: Route['kind']) => void } {
 }
 
 /**
- * The host key arrives in the URL, is exchanged for a cookie, and is then wiped from the
- * address bar — which is on a projector in front of twenty people holding cameras.
+ * The room code travels in the hash so a board can be reopened and a join link can carry
+ * it — `#/host?r=482913` for the projector, `#/?r=482913` behind a QR code. It is not a
+ * secret; it is on a wall in front of the room.
  */
-export function takeHostKey(): string | null {
+export function roomFromUrl(): string | null {
   if (typeof window === 'undefined') return null;
   const query = window.location.hash.split('?')[1] ?? '';
-  const key = new URLSearchParams(query).get('k');
-  if (key === null) return null;
-  window.history.replaceState(null, '', `${window.location.pathname}#/host`);
-  return key;
+  const code = new URLSearchParams(query).get('r');
+  return code !== null && isRoomCode(code) ? code : null;
 }

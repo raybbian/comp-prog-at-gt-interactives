@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AnyView } from '../protocol/types.ts';
-import { API, type Reply, get, post } from '../transport/client.ts';
+import { type Reply, apiBase, get, post } from '../transport/client.ts';
 
 /**
  * Keeping a screen in step with the meeting.
@@ -57,10 +57,11 @@ export function useMeeting<V extends AnyView>(
         accept(reply.data.view);
         return;
       }
-      // A session the server will not honour is not a thing to wait out. Say so, so the
-      // screen can offer a way back in rather than sitting on "catching up" forever —
-      // which is exactly what a dropped cookie used to look like.
-      if (reply.error === 'unknown_session' || reply.error === 'not_host') setHealth('lost');
+      // A session the server will not honour — or a meeting that is no longer there — is
+      // not a thing to wait out. Say so, so the screen can offer a way back in rather than
+      // sitting on "catching up" forever, which is exactly what a dropped cookie used to
+      // look like.
+      if (reply.error === 'unknown_session' || reply.error === 'no_room') setHealth('lost');
     });
   }, [accept, enabled, viewPath]);
 
@@ -78,7 +79,7 @@ export function useMeeting<V extends AnyView>(
     if (!enabled) return;
     resync();
 
-    const source = new EventSource(`${API}${streamPath}`);
+    const source = new EventSource(`${apiBase()}${streamPath}`);
     lastBeat.current = Date.now();
 
     source.addEventListener('view', (event) => {

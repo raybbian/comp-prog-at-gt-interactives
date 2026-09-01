@@ -74,6 +74,8 @@ export type Session = { teamId: string; role: Role };
 
 export type Meta = {
   v: number;
+  /** The room code this meeting was opened under. Fixed for its lifetime. */
+  room: string;
   seed: string;
   phase: Phase;
   /** -1 before the first round starts. */
@@ -85,14 +87,14 @@ export type Meta = {
   codes: Record<string, string>;
   usedCodes: string[];
   sessions: Record<string, Session>;
-  hostKey: string;
 };
 
 export type State = { meta: Meta; teams: Record<string, Team> };
 
-export function freshMeta(hostKey: string, seed: string): Meta {
+export function freshMeta(room: string, seed: string): Meta {
   return {
     v: 1,
+    room,
     seed,
     phase: 'lobby',
     roundIndex: -1,
@@ -102,7 +104,6 @@ export function freshMeta(hostKey: string, seed: string): Meta {
     codes: {},
     usedCodes: [],
     sessions: {},
-    hostKey,
   };
 }
 

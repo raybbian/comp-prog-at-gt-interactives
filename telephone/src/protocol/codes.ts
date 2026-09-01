@@ -18,7 +18,7 @@ export const ERROR_CODES = [
   'nothing_received',
   'already_submitted',
   'too_fast',
-  'not_host',
+  'no_room',
   'round_running',
   'server_full',
 ] as const;
@@ -44,6 +44,20 @@ const CODE_PATTERN = /^[1-9][0-9]{3}$/;
 
 export function isJoinCode(value: string): boolean {
   return CODE_PATTERN.test(value);
+}
+
+/**
+ * A room code is six digits, and the length is the point.
+ *
+ * Players type two numbers over an evening — the room they are in and the team they are
+ * on — and the only thing stopping someone typing one into the other's box is that four
+ * digits and six digits do not look alike. The wider space is a free side effect: room
+ * codes are never recycled, so exhausting them should take longer than the club will.
+ */
+const ROOM_PATTERN = /^[1-9][0-9]{5}$/;
+
+export function isRoomCode(value: string): boolean {
+  return ROOM_PATTERN.test(value);
 }
 
 /**

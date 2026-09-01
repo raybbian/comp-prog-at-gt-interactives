@@ -13,16 +13,14 @@
   // One meeting, one object: a single-threaded actor holding every team, message and
   // round in memory, with durable storage underneath it. This is the "one long-running
   // process" model without a laptop under the projector to keep awake.
+  //
+  // The object is named after the room code on the projector, which is minted when the
+  // host screen is opened. So a new meeting is a new tab rather than a redeploy, and two
+  // host tabs are two meetings — the room joins the code it can see.
   "durable_objects": {
     "bindings": [{ "name": "MEETING", "class_name": "Meeting" }]
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meeting"] }],
-
-  // Which meeting this deployment is running. Every team, message and score lives in the
-  // object with this name, so changing it is how you start a new game: the old meeting is
-  // left intact and untouched, and the new one begins empty. Next semester is a one-word
-  // edit rather than a button someone can hit by accident.
-  "vars": { "MEETING_ID": "fall-2026" },
 
   "observability": { "enabled": true }
 }

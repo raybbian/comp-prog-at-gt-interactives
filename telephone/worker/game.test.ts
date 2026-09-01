@@ -5,8 +5,8 @@ import {
   closeRound,
   createTeam,
   join,
-  newHostKey,
   paint,
+  resetMeeting,
   resolve,
   sendMessage,
   submit,
@@ -17,7 +17,7 @@ import { buildHostView, buildReceiverView, buildSenderView } from './views.ts';
 const NOW = 1_800_000_000_000;
 
 function meeting(seed = 'test-seed'): State {
-  return { meta: freshMeta(newHostKey(), seed), teams: {} };
+  return { meta: freshMeta('482913', seed), teams: {} };
 }
 
 /** Create a team and sit a phone in each seat. */
@@ -295,6 +295,30 @@ describe('the host board', () => {
     expect(row?.paired).toBe(false);
     expect(row?.activity).toBe('waiting');
     expect(row?.receiver).toBe('empty');
+  });
+
+  it('never puts a join code on the board, paired or not', () => {
+    const state = meeting();
+    const made = createTeam(state, 'ALONE');
+    if (!made.ok) throw new Error('could not create team');
+
+    const alone = buildHostView(state, 'https://example.test', NOW).teams[0];
+    expect(alone).not.toHaveProperty('code');
+
+    join(state, made.value.code, 'sender', false, NOW);
+    join(state, made.value.code, 'receiver', false, NOW);
+    const paired = buildHostView(state, 'https://example.test', NOW).teams[0];
+    expect(paired).not.toHaveProperty('code');
+  });
+
+  it('keeps the room code across a reset, so the projector does not change', () => {
+    const state = meeting();
+    seated(state, 'GONE');
+    resetMeeting(state, 'another-seed');
+
+    expect(state.meta.room).toBe('482913');
+    expect(buildHostView(state, 'https://example.test', NOW).room).toBe('482913');
+    expect(Object.keys(state.teams)).toHaveLength(0);
   });
 
   it('leaves the warm-up round out of the standings', () => {

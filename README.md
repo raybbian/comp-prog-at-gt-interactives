@@ -348,7 +348,7 @@ Three screens, all on one origin:
 | Route      | Who                                                       |
 | ---------- | --------------------------------------------------------- |
 | `#/`       | the phones — which half you get is decided by the server   |
-| `#/host`   | the projector: standings, the clock, the round controls    |
+| `#/host`   | the projector: the room code, standings, clock, controls   |
 | `#/brief`  | the projector before the game: join URL, rules, samples    |
 
 Routing is on the hash, not the path. Every workspace here builds with `base: './'`, so a
@@ -365,13 +365,21 @@ buttons means the whole room watching someone hunt for a cursor.
 | `+` / `−` | add or take 30 seconds |
 | `Ctrl` `Shift` `K` | reset the whole event, behind a confirmation |
 
-The board needs a host key. Set `HOST_KEY` as a secret and open `#/host?k=<key>`; the
-client swaps it for a cookie and wipes it out of the address bar, which is on a projector
-in front of everyone. Without `HOST_KEY` set, the object generates one and logs it —
-visible in `wrangler tail`, or in the dev console. Unauthenticated host routes answer 404
-rather than 403, so poking at them tells you nothing.
+**Opening `#/host` opens a meeting**, and mints the six-digit room code the board then
+puts on the wall. Opening it a second time opens a second meeting with a second code, the
+way Kahoot does — nothing tries to dedupe them and nothing has to, because the room can
+only join the code it can see. The code is remembered per *tab*, so reloading the board or
+closing the laptop lid comes back to the same meeting, and it is written into the address
+bar as `#/host?r=<code>` so a tab closed by accident can be reopened.
 
-For local work, `telephone/.dev.vars` (gitignored) holds `HOST_KEY=dev-host-key`.
+There is no host key. The board is unauthenticated, because the only thing a key ever
+bought was stopping someone in the room from opening a URL they were not given — a social
+problem that cost a Cloudflare secret which had to be set before the one evening it
+mattered. What made that safe to drop is that the board has nothing on it worth stealing:
+`HostTeamRow` carries no join code at all. It never needed one. A code is read off the
+phone of whoever made the team by the partner sitting beside them, and that phone puts it
+back on screen by itself the moment a seat falls empty — so the recovery case the board
+might have covered is already covered where the code belongs.
 
 `npm run preview:telephone` serves only the built client, with no API behind it. It is
 useful for looking at a screen, not for playing — use `npm run dev:telephone` for that.
@@ -387,8 +395,13 @@ same team can never interleave halfway through a mutation.
 Teams are stored one key at a time rather than as one blob; a Durable Object value is
 capped well below what twenty teams' message logs come to by the end of an evening.
 
-`MEETING_ID` picks which meeting a deployment is running. A new name is a clean slate, so
-next semester is a variable rather than a reset button.
+The object is named after its room code, and it claims that code itself: minting picks a
+candidate, asks the object that name would address whether it is already open, and tries
+again if it is. `idFromName` is deterministic, so that question *is* "is this code free",
+and the object answers it on its own single thread — which is what makes two hosts minting
+in the same second safe without a registry, a lock, or a second place for the truth to
+live. An object that has never been opened refuses every route but `/__open`, so a
+mistyped code is a 404 rather than an empty meeting somebody is alone in.
 
 ### Sessions, and why they travel twice
 
@@ -489,10 +502,10 @@ Object rather than a Pages project, and it serves its own client from `telephone
 on the same origin as `/api`. It deploys with `wrangler deploy` from `telephone/`, which
 the workflow does as a fourth step.
 
-Two things it needs that the Pages projects do not: the API token wants **Workers
-Scripts: Edit** alongside Pages: Edit, and `HOST_KEY` has to be set once —
-`npx wrangler secret put HOST_KEY` from `telephone/` — or the host key changes under the
-projector whenever the object is recreated.
+One thing it needs that the Pages projects do not: the API token wants **Workers
+Scripts: Edit** alongside Pages: Edit. There is nothing else to configure — no secret and
+no meeting variable, since a meeting is created by opening the board rather than by a
+deploy.
 
 `.github/workflows/deploy.yml` runs on every push to `main`: `npm ci`,
 `npm audit signatures`, typecheck, tests, `npm run build`, then one upload per

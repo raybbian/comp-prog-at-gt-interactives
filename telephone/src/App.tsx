@@ -6,9 +6,20 @@ import { Host } from './routes/Host.tsx';
 import { Join } from './routes/Join.tsx';
 import { Receiver } from './routes/Receiver.tsx';
 import { Sender } from './routes/Sender.tsx';
+import { RoomGate, RoomGone } from './routes/RoomGate.tsx';
 import { useMeeting, useWakeLock } from './state/useMeeting.ts';
-import { takeHostKey, useRoute } from './state/useHashRoute.ts';
-import { forgetSession, post, recallSession, rememberSession } from './transport/client.ts';
+import { roomFromUrl, useRoute } from './state/useHashRoute.ts';
+import {
+  enterRoom,
+  forgetRoom,
+  forgetSession,
+  openRoom,
+  post,
+  recallRoom,
+  rememberRoom,
+  rememberSession,
+  recallSession,
+} from './transport/client.ts';
 
 /**
  * Four screens behind three hash routes: the two phones share `#/`, the projector is at
@@ -31,87 +42,101 @@ function BriefingScreen() {
   return <Briefing joinUrl={origin} />;
 }
 
+/**
+ * Opening the board opens a meeting.
+ *
+ * The code is remembered per tab rather than per browser, so a reload — or the projector
+ * being unplugged and the laptop lid closed — comes back to the same meeting, while a
+ * second tab deliberately starts a second one. Nothing tries to stop that or to guess
+ * which tab is the real one: the room can only join the code it can see.
+ */
 function HostScreen() {
-  const [claimed, setClaimed] = useState<boolean | null>(null);
-  const [key, setKey] = useState('');
+  const [ready, setReady] = useState<boolean | null>(null);
 
-  // The key arrives in the URL, is swapped for a cookie, and is wiped from the address
-  // bar — which is on a projector in front of the whole room.
   useEffect(() => {
-    const fromUrl = takeHostKey();
     void (async () => {
-      if (fromUrl !== null) {
-        const reply = await post('/host/claim', { hostKey: fromUrl });
-        // Stored in the same slot a player's session uses, so the header fallback carries
-        // it too — the projector laptop is as likely to refuse a cookie as a phone is.
-        if (reply.ok) rememberSession(fromUrl);
-        setClaimed(reply.ok);
+      const existing = roomFromUrl() ?? recallRoom('tab');
+      const code = existing ?? (await openRoom().then((r) => (r.ok ? r.data.room : null)));
+      if (code === null) {
+        setReady(false);
         return;
       }
-      const existing = await post('/host/view');
-      setClaimed(existing.ok);
+      enterRoom(code);
+      rememberRoom(code, 'tab');
+      // Back into the address bar, so the tab is recoverable if it is closed by accident.
+      window.history.replaceState(null, '', `${window.location.pathname}#/host?r=${code}`);
+      setReady(true);
     })();
   }, []);
 
-  const meeting = useMeeting<HostView>('/host/view', '/host/events', claimed === true);
+  const meeting = useMeeting<HostView>('/host/view', '/host/events', ready === true);
 
-  if (claimed === false) {
-    return (
-      <AppShell mark="Competitive Programming at GT" contentClassName="max-w-sm">
-        <div className="flex flex-col gap-4">
-          <MicroLabel as="h1">Host key</MicroLabel>
-          <input
-            value={key}
-            onChange={(event) => setKey(event.target.value)}
-            className="h-14 w-full border border-hairline-strong bg-ground-raised px-4 font-mono text-lg text-ink focus-visible:border-accent focus-visible:outline-none"
-          />
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => {
-              void post('/host/claim', { hostKey: key }).then((reply) => {
-                if (reply.ok) rememberSession(key);
-                setClaimed(reply.ok);
-              });
-            }}
-          >
-            Open the board
-          </Button>
-          <p className="text-sm text-ink-muted">
-            The key is printed by <code>wrangler deploy</code>, or set as{' '}
-            <code>HOST_KEY</code>.
-          </p>
-        </div>
-      </AppShell>
-    );
-  }
-
+  if (ready === false) return <Splash line="Could not open a meeting." />;
   if (meeting.view === null) return <Splash line="Opening the board…" />;
   return <Host view={meeting.view} meeting={meeting} />;
 }
 
 function PlayScreen() {
+  const [room, setRoom] = useState<string | null | undefined>(undefined);
   const [session, setSession] = useState<string | null | undefined>(undefined);
+  const [gone, setGone] = useState(false);
+
+  // Unlike the board, a phone remembers its room for the whole device: it has to survive
+  // being locked, closed, and picked up again twenty minutes later.
+  useEffect(() => {
+    const code = roomFromUrl() ?? recallRoom('device');
+    if (code !== null) {
+      enterRoom(code);
+      // Including one that arrived on a link: a phone that scanned a QR must not be asked
+      // for a code it was never made to type.
+      rememberRoom(code, 'device');
+    }
+    setRoom(code);
+  }, []);
 
   // A phone that reloads, or comes back after being locked, gets its seat back without
   // anyone having to type a code again.
   useEffect(() => {
+    if (room === undefined || room === null) return;
     const stored = recallSession();
     void (async () => {
       const reply = await post<{ sessionId: string }>('/rejoin', { sessionId: stored ?? '' });
       if (reply.ok) {
         rememberSession(reply.data.sessionId);
         setSession(reply.data.sessionId);
-      } else {
-        forgetSession();
-        setSession(null);
+        return;
       }
+      // The meeting itself is gone, which is a different problem from having lost a seat
+      // in one that is still running, and needs a different way out.
+      if (reply.error === 'no_room') setGone(true);
+      forgetSession();
+      setSession(null);
     })();
-  }, []);
+  }, [room]);
+
+  const leaveRoom = (): void => {
+    forgetRoom('device');
+    forgetSession();
+    window.location.replace(`${window.location.pathname}#/`);
+    window.location.reload();
+  };
 
   const meeting = useMeeting<PlayerView>('/view', '/events', session !== null && session !== undefined);
   useWakeLock(meeting.view?.round?.phase === 'play');
 
+  if (room === undefined) return <Splash line="Finding the meeting…" />;
+  if (gone) return <RoomGone onReset={leaveRoom} />;
+  if (room === null) {
+    return (
+      <RoomGate
+        onEntered={(code) => {
+          enterRoom(code);
+          rememberRoom(code, 'device');
+          setRoom(code);
+        }}
+      />
+    );
+  }
   if (session === undefined) return <Splash line="Finding your team…" />;
   if (session === null) return <Join onJoined={() => window.location.reload()} />;
 

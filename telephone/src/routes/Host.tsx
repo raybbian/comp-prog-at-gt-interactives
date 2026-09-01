@@ -111,8 +111,21 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
             <section className="flex min-h-0 flex-col justify-center gap-10 overflow-hidden border-r border-hairline px-14">
               {phase === 'lobby' ? (
                 <>
-                  <MicroLabel size="xl">Join on your phone</MicroLabel>
-                  <p className="font-mono text-[5rem] leading-none tnum text-ink">{host}</p>
+                  <div className="flex flex-col gap-4">
+                    <MicroLabel size="xl">Join on your phone at</MicroLabel>
+                    <p className="font-mono text-[4rem] leading-none tnum text-ink">{host}</p>
+                  </div>
+                  {/*
+                    The code is the largest thing on the screen for the whole of the lobby,
+                    and it is the accent because typing it is the one thing the room is
+                    being asked to do.
+                  */}
+                  <div className="flex flex-col gap-4">
+                    <MicroLabel size="xl">With the room code</MicroLabel>
+                    <p className="font-mono text-[10rem] leading-[0.85] tnum tracking-[0.08em] text-accent">
+                      {view.room}
+                    </p>
+                  </div>
                   <p className="max-w-[900px] text-[2.25rem] leading-tight text-ink-muted">
                     One of you sees a snake. The other has to draw it. You get eight digits a
                     message, and nothing else.
@@ -166,70 +179,16 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
             </section>
 
             <section className="flex min-h-0 flex-col overflow-hidden px-14 py-10">
-              <MicroLabel size="xl" className="shrink-0">
-                Standings
-              </MicroLabel>
-
-              <ol className="mt-6 flex shrink-0 flex-col">
-                {view.standings.slice(0, 7).map((row) => (
-                  <li
-                    key={row.teamId}
-                    className="flex h-[62px] items-center gap-5 border-b border-hairline"
-                  >
-                    <span className="w-9 font-mono text-[1.75rem] tnum text-ink-faint">
-                      {row.rank}
-                    </span>
-                    <span className="flex-1 truncate text-[2rem] text-ink">{row.name}</span>
-                    <span className="w-14 text-right font-mono text-[2rem] tnum text-ink">
-                      {row.solved}
-                    </span>
-                    <span className="w-20 text-right font-mono text-[2rem] tnum text-ink-faint">
-                      {row.messages}
-                    </span>
-                  </li>
-                ))}
-                {view.standings.length === 0 && (
-                  <li className="py-8 text-[1.75rem] text-ink-faint">Nobody has joined yet.</li>
-                )}
-              </ol>
-
-              {view.standings.length > 0 && (
-                <div className="mt-3 flex shrink-0 justify-end gap-5">
-                  <MicroLabel className="w-14 text-right">Solved</MicroLabel>
-                  <MicroLabel className="w-20 text-right">Msgs</MicroLabel>
-                </div>
-              )}
-
-              <MicroLabel size="lg" className="mt-auto shrink-0 pt-8">
-                Every team
-              </MicroLabel>
-              <div className="mt-4 grid min-h-0 grid-cols-3 gap-x-6 gap-y-1 overflow-hidden">
-                {ordered.slice(0, 24).map((team) => (
-                  <div
-                    key={team.teamId}
-                    className={cn(
-                      'flex items-baseline gap-2 text-[1.375rem] leading-8',
-                      team.paired ? 'text-ink-muted' : 'text-ink',
-                    )}
-                  >
-                    <span aria-hidden="true" className="w-3 shrink-0 font-mono">
-                      {GLYPH[team.activity]}
-                    </span>
-                    <span className="truncate">{team.name}</span>
-                    {!team.paired && (
-                      <span className="ml-auto shrink-0 font-mono text-[1.25rem] tnum">
-                        {team.code}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {phase === 'lobby' ? <Roster teams={ordered} /> : <Board view={view} teams={ordered} />}
             </section>
           </main>
 
+
           {/* 96 — the host's own rail. The room is not reading this. */}
           <footer className="flex h-24 shrink-0 items-center justify-between border-t border-hairline px-14 text-[1.25rem] text-ink-faint">
-            <span className="font-mono">{host}</span>
+            <span className="font-mono">
+              {host} · room {view.room}
+            </span>
             <span>→ next · ← back · space pause · +/− 30s</span>
             <span className={cn(unpaired.length > 0 && 'text-ink')}>
               {unpaired.length === 0
@@ -240,6 +199,127 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The lobby roster: the room watching itself fill up.
+ *
+ * Team join codes are deliberately not here. A code is read off the phone of the person
+ * who made the team, by the partner standing next to them — putting twenty of them on a
+ * wall would only tell forty strangers how to take each other's seats. What the room
+ * genuinely wants to know is whether its own name has landed and who is still on their own.
+ */
+function Roster({ teams }: { teams: readonly HostTeamRow[] }) {
+  const alone = teams.filter((team) => !team.paired).length;
+
+  if (teams.length === 0) {
+    return (
+      <>
+        <MicroLabel size="xl" className="shrink-0 text-ink">
+          Teams
+        </MicroLabel>
+        <p className="mt-8 text-[2rem] leading-tight text-ink-faint">
+          Nobody yet. Start a team on your phone and it appears here.
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex shrink-0 items-baseline justify-between">
+        <MicroLabel size="xl" className="text-ink">
+          Teams
+        </MicroLabel>
+        <MicroLabel size="lg">
+          {alone === 0 ? 'everyone paired' : `${alone} still on their own`}
+        </MicroLabel>
+      </div>
+      {/*
+        Two columns of fixed-height rows that clip rather than grow. Twenty-six is what
+        fits, and a twenty-seventh team must not be allowed to push the footer off a
+        projector nobody can scroll.
+      */}
+      <div className="mt-6 grid min-h-0 flex-1 auto-rows-[56px] grid-cols-2 content-start gap-x-10 overflow-hidden">
+        {teams.slice(0, 26).map((team) => (
+          <div
+            key={team.teamId}
+            className="flex items-center gap-4 border-b border-hairline"
+          >
+            <span
+              className={cn(
+                'flex-1 truncate text-[1.625rem]',
+                team.paired ? 'text-ink' : 'text-ink-muted',
+              )}
+            >
+              {team.name}
+            </span>
+            {team.paired ? (
+              <span aria-hidden="true" className="font-mono text-[1.5rem] text-ink">
+                ●
+              </span>
+            ) : (
+              <MicroLabel>needs a partner</MicroLabel>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Standings and the every-team grid, which are only worth the space once a round has run. */
+function Board({ view, teams }: { view: HostView; teams: readonly HostTeamRow[] }) {
+  return (
+    <>
+      <MicroLabel size="xl" className="shrink-0">
+        Standings
+      </MicroLabel>
+
+      <ol className="mt-6 flex shrink-0 flex-col">
+        {view.standings.slice(0, 7).map((row) => (
+          <li key={row.teamId} className="flex h-[62px] items-center gap-5 border-b border-hairline">
+            <span className="w-9 font-mono text-[1.75rem] tnum text-ink-faint">{row.rank}</span>
+            <span className="flex-1 truncate text-[2rem] text-ink">{row.name}</span>
+            <span className="w-14 text-right font-mono text-[2rem] tnum text-ink">{row.solved}</span>
+            <span className="w-20 text-right font-mono text-[2rem] tnum text-ink-faint">
+              {row.messages}
+            </span>
+          </li>
+        ))}
+        {view.standings.length === 0 && (
+          <li className="py-8 text-[1.75rem] text-ink-faint">Nobody has joined yet.</li>
+        )}
+      </ol>
+
+      {view.standings.length > 0 && (
+        <div className="mt-3 flex shrink-0 justify-end gap-5">
+          <MicroLabel className="w-14 text-right">Solved</MicroLabel>
+          <MicroLabel className="w-20 text-right">Msgs</MicroLabel>
+        </div>
+      )}
+
+      <MicroLabel size="lg" className="mt-auto shrink-0 pt-8">
+        Every team
+      </MicroLabel>
+      <div className="mt-4 grid min-h-0 grid-cols-3 gap-x-6 gap-y-1 overflow-hidden">
+        {teams.slice(0, 24).map((team) => (
+          <div
+            key={team.teamId}
+            className={cn(
+              'flex items-baseline gap-2 text-[1.375rem] leading-8',
+              team.paired ? 'text-ink-muted' : 'text-ink',
+            )}
+          >
+            <span aria-hidden="true" className="w-3 shrink-0 font-mono">
+              {GLYPH[team.activity]}
+            </span>
+            <span className="truncate">{team.name}</span>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 

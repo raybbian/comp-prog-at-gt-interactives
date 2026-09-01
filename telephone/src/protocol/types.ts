@@ -106,10 +106,16 @@ export type ReceiverView = PlayerViewBase & {
 
 export type PlayerView = SenderView | ReceiverView;
 
+/**
+ * Note what is not here: the join code. The board has no use for one — a code is read off
+ * the phone of whoever made the team, by the partner sitting next to them, and the phone
+ * shows it again by itself whenever a seat falls empty. Sending it anyway would publish
+ * every team's code on an unauthenticated screen, and `takeover` is a button on the join
+ * screen rather than an API call somebody has to know how to make.
+ */
 export type HostTeamRow = {
   readonly teamId: string;
   readonly name: string;
-  readonly code: string;
   readonly paired: boolean;
   readonly sender: SeatState;
   readonly receiver: SeatState;
@@ -124,6 +130,8 @@ export type HostView = {
   readonly v: number;
   readonly serverTime: number;
   readonly joinUrl: string;
+  /** The six digits the room types in. This board is the only place they are published. */
+  readonly room: string;
   readonly round: PublicRound | null;
   readonly reveal: Reveal | null;
   readonly teams: readonly HostTeamRow[];
@@ -139,6 +147,7 @@ export type AnyView = PlayerView | HostView;
 export type Lobby = {
   readonly kind: 'lobby';
   readonly serverTime: number;
+  readonly room: string;
   readonly phase: Phase;
   readonly roundIndex: number | null;
   readonly teamCount: number;

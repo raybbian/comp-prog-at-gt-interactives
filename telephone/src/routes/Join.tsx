@@ -1,7 +1,7 @@
-import { AppShell, Button, MicroLabel, Rule, cn, normalizeName } from '@cpatgt/shared';
+import { AppShell, Button, MicroLabel, Rule, normalizeName } from '@cpatgt/shared';
 import { MAX_NAME_LENGTH } from '@cpatgt/shared';
 import { useState } from 'react';
-import { Keypad } from '../components/Keypad.tsx';
+import { CodeEntry } from '../components/CodeEntry.tsx';
 import type { Role } from '../protocol/types.ts';
 import { post, rememberSession } from '../transport/client.ts';
 
@@ -161,26 +161,11 @@ export function Join({ onJoined }: { onJoined: () => void }) {
         {stage.kind === 'code' && (
           <div className="flex flex-col gap-4">
             <MicroLabel as="h2">Join code</MicroLabel>
-            <div className="flex gap-2">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'flex h-16 flex-1 items-center justify-center border font-mono text-3xl tnum text-ink',
-                    i === code.length
-                      ? 'border-accent bg-accent-soft'
-                      : 'border-hairline-strong bg-ground-raised',
-                  )}
-                >
-                  {code[i] ?? ''}
-                </div>
-              ))}
-            </div>
-            <Keypad
-              onDigit={(digit) => setCode((current) => (current + digit).slice(0, 4))}
-              onBackspace={() => setCode((current) => current.slice(0, -1))}
+            <CodeEntry
+              length={4}
+              value={code}
+              onChange={setCode}
               commitLabel="Next"
-              commitDisabled={code.length !== 4}
               onCommit={() => setStage({ kind: 'role', code })}
             />
             <Button variant="ghost" onClick={() => setStage({ kind: 'choose' })}>

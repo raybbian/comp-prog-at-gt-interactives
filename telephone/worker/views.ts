@@ -198,7 +198,6 @@ export function buildHostView(state: State, joinUrl: string, now: number): HostV
     return {
       teamId: team.id,
       name: team.name,
-      code: team.code,
       paired: team.sender !== null && team.receiver !== null,
       sender: seat(team.sender),
       receiver: seat(team.receiver),
@@ -213,6 +212,7 @@ export function buildHostView(state: State, joinUrl: string, now: number): HostV
     v: state.meta.v,
     serverTime: now,
     joinUrl,
+    room: state.meta.room,
     round:
       spec === null
         ? null

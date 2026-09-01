@@ -41,7 +41,7 @@ function token(bytes: number): string {
   return [...buffer].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function newHostKey(): string {
+export function newSeed(): string {
   return token(16);
 }
 
@@ -358,8 +358,8 @@ export function closeRound(state: State): void {
   }
 }
 
+/** A clean slate in the same room, so the code on the projector does not change. */
 export function resetMeeting(state: State, seed: string): void {
-  const hostKey = state.meta.hostKey;
-  state.meta = freshMeta(hostKey, seed);
+  state.meta = freshMeta(state.meta.room, seed);
   for (const id of Object.keys(state.teams)) delete state.teams[id];
 }

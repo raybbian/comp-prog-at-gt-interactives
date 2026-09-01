@@ -3,7 +3,6 @@
 import type { ErrorCode } from '../src/protocol/codes.ts';
 
 export const SESSION_COOKIE = 'tel_s';
-export const HOST_COOKIE = 'tel_h';
 
 /**
  * Fetch can set a header; `EventSource` cannot. So the session travels as a cookie for
@@ -33,8 +32,7 @@ const STATUS: Partial<Record<ErrorCode, number>> = {
   nothing_received: 409,
   already_submitted: 409,
   too_fast: 429,
-  // Never advertise the host surface to someone poking at it.
-  not_host: 404,
+  no_room: 404,
   round_running: 409,
   server_full: 503,
 };
@@ -64,11 +62,16 @@ export function setCookie(
   value: string,
   maxAgeSeconds: number,
   secure: boolean,
+  path: string,
 ): string {
   // `Secure` is right in production and fatal in local testing: a browser rejects a
   // Secure cookie over plain HTTP, and `http://<laptop-ip>:5176` on a phone is plain
   // HTTP. (`localhost` is exempt, which is exactly why this only ever broke on a phone.)
-  const flags = `Path=/; Max-Age=${maxAgeSeconds}; SameSite=Lax; HttpOnly${secure ? '; Secure' : ''}`;
+  //
+  // The path scopes the cookie to one room. A laptop with the board open in one tab and a
+  // phone-sized window playing in another is a normal way to test this, and a single
+  // `Path=/` session cookie would have those two overwrite each other.
+  const flags = `Path=${path}; Max-Age=${maxAgeSeconds}; SameSite=Lax; HttpOnly${secure ? '; Secure' : ''}`;
   return `${name}=${encodeURIComponent(value)}; ${flags}`;
 }
 
