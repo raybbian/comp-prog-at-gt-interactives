@@ -5,6 +5,7 @@ import {
   closeRound,
   createTeam,
   join,
+  leave,
   paint,
   resetMeeting,
   resolve,
@@ -257,6 +258,19 @@ describe('seats', () => {
     expect(first.ok && second.ok).toBe(true);
     if (!first.ok || !second.ok) return;
     expect(second.value.name).not.toBe(first.value.name);
+  });
+
+  it('frees the seat when a player leaves, and leaves the team standing', () => {
+    const state = meeting();
+    const { team, senderSession } = seated(state);
+
+    leave(state, senderSession);
+
+    expect(team.sender).toBeNull();
+    expect(team.receiver).not.toBeNull();
+    expect(resolve(state, senderSession, NOW).ok).toBe(false);
+    // Free rather than contested, so the pair can swap round without a takeover.
+    expect(join(state, team.code, 'sender', false, NOW).ok).toBe(true);
   });
 });
 

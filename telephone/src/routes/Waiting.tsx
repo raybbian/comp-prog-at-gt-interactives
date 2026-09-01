@@ -1,10 +1,12 @@
-import { AppShell, MicroLabel, Rule } from '@cpatgt/shared';
+import { AppShell, Button, MicroLabel, Rule } from '@cpatgt/shared';
+import { useState } from 'react';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
 import { roundById, sampleFor } from '../protocol/rounds.ts';
 import type { PlayerView, Role } from '../protocol/types.ts';
 import type { Meeting } from '../state/useMeeting.ts';
+import { forgetSession, post } from '../transport/client.ts';
 
 /**
  * Everything that is not the round itself: waiting for the host, protocol time, and the
@@ -163,8 +165,62 @@ export function Waiting({
             </p>
           </div>
         )}
+
+        {(phase === 'lobby' || phase === 'brief') && <LeaveSeat role={role} />}
       </div>
     </AppShell>
+  );
+}
+
+/**
+ * A way out of the wrong seat.
+ *
+ * Only before the clock starts. A pair who picked the wrong way round work that out while
+ * reading the brief, and a tap that silently drops your seat is a different thing entirely
+ * once the round is running and your partner is waiting on you — so mid-round there is
+ * deliberately no button at all.
+ *
+ * Two taps rather than one, because the phrasing is the reassurance: what you lose is the
+ * seat, not the team, and the code still works.
+ */
+function LeaveSeat({ role }: { role: Role }) {
+  const [asking, setAsking] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const leave = async (): Promise<void> => {
+    setBusy(true);
+    await post('/leave');
+    // Whatever the server said, this phone is done with that seat. The session is already
+    // gone server-side, so a stale copy here would only fail the next rejoin.
+    forgetSession();
+    window.location.reload();
+  };
+
+  if (!asking) {
+    return (
+      <div className="border-t border-hairline pt-6">
+        <Button variant="ghost" onClick={() => setAsking(true)}>
+          Wrong seat?
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-hairline pt-6">
+      <p className="text-sm text-ink-muted">
+        You are {role === 'sender' ? 'sending' : 'drawing'}. Leaving frees this seat and
+        keeps the team — join again with the same code to take either one.
+      </p>
+      <div className="flex gap-2">
+        <Button variant="quiet" disabled={busy} onClick={() => void leave()}>
+          Leave the seat
+        </Button>
+        <Button variant="ghost" disabled={busy} onClick={() => setAsking(false)}>
+          Stay
+        </Button>
+      </div>
+    </div>
   );
 }
 

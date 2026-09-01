@@ -65,7 +65,7 @@ describe('protocol time', () => {
   const spec = ROUNDS[2];
   if (spec === undefined) throw new Error('missing round');
 
-  const viewFor = (role: Role): PlayerView =>
+  const viewFor = (role: Role, phase: 'brief' | 'done' = 'brief'): PlayerView =>
     ({
       kind: role,
       v: 1,
@@ -82,7 +82,7 @@ describe('protocol time', () => {
         lossy: spec.dropRate > 0,
         counts: spec.counts,
         brief: spec.brief,
-        phase: 'brief',
+        phase,
         phaseEndsAt: null,
         snakeLength: 0,
       },
@@ -96,10 +96,23 @@ describe('protocol time', () => {
       ...(role === 'sender' ? { target: '' } : { grid: '', gridRev: 0, submittedAt: null }),
     }) as PlayerView;
 
-  const render = (role: Role): string =>
+  const render = (role: Role, phase: 'brief' | 'done' = 'brief'): string =>
     renderToString(
-      <Waiting view={viewFor(role)} meeting={{ health: 'live' }} role={role} msLeft={60_000} />,
+      <Waiting
+        view={viewFor(role, phase)}
+        meeting={{ health: 'live' }}
+        role={role}
+        msLeft={60_000}
+      />,
     );
+
+  // Leaving is for a pair who picked the wrong way round while reading the brief. Once the
+  // clock is running it is just a way to abandon your partner, so it is not offered.
+  it('offers a way out of the wrong seat, but only before the clock starts', () => {
+    expect(render('sender')).toContain('Wrong seat?');
+    expect(render('receiver')).toContain('Wrong seat?');
+    expect(render('sender', 'done')).not.toContain('Wrong seat?');
+  });
 
   it('shows both players an example, and calls the phase what it is', () => {
     for (const role of ['sender', 'receiver'] as const) {
