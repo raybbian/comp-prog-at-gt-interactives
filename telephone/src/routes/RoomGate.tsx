@@ -20,7 +20,7 @@ export function RoomGate({ onEntered }: { onEntered: (code: string) => void }) {
   const check = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const reply = await get<{ view: Lobby }>(`/lobby`, `/api/r/${code}`);
+    const reply = await get<Lobby>('/lobby', `/api/r/${code}`);
     setBusy(false);
     if (!reply.ok) {
       setError(

@@ -243,7 +243,9 @@ export class Meeting implements DurableObject {
         teamCount: Object.keys(this.#state.teams).length,
         joinOpen: this.#state.meta.phase !== 'done',
       };
-      return json(lobby);
+      // Enveloped like every other reply: the client reads `ok` to tell success from
+      // failure, and a bare body is indistinguishable from one.
+      return json({ ok: true, ...lobby });
     }
 
     if (path === '/teams' && request.method === 'POST') {
