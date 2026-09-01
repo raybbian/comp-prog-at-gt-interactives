@@ -163,10 +163,17 @@ export function SnakeGrid({
                 {head === cell && (
                   <span className="absolute inset-[30%] rounded-full bg-ground-raised" />
                 )}
-                {showNumbers && filled && head !== cell && (
+                {/*
+                  The head cell gets its level too, drawn over the marker rather than
+                  instead of it: on the round that has a head the colours are the entire
+                  puzzle, so the one cell you cannot read the level of must not be the one
+                  the pair have agreed to count from.
+                */}
+                {showNumbers && filled && (
                   <span
                     className={cn(
-                      'absolute inset-0 flex items-center justify-center font-mono leading-none tnum text-accent-ink',
+                      'absolute inset-0 flex items-center justify-center font-mono leading-none tnum',
+                      head === cell ? 'text-ink' : 'text-accent-ink',
                       digitClass,
                     )}
                   >

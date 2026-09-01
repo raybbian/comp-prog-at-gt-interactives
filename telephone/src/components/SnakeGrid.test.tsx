@@ -21,6 +21,16 @@ describe('SnakeGrid numbers', () => {
     );
   });
 
+  // The head marker sits in the middle of its cell; the level has to survive that, or the
+  // one cell a pair count from is the one whose colour cannot be read.
+  it('still writes the level on the cell carrying the head marker', () => {
+    const html = renderToString(
+      <SnakeGrid size={size} grid={grid} levels={9} numbers head={0} />,
+    );
+    expect(digits(html)).toBe('123');
+    expect(html).toContain('rounded-full');
+  });
+
   it('leaves the grid bare unless asked', () => {
     expect(digits(renderToString(<SnakeGrid size={size} grid={grid} levels={9} />))).toBe('');
   });
