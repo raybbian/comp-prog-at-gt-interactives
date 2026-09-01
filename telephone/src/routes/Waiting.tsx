@@ -91,6 +91,7 @@ export function Waiting({
                   grid={sampleFor(spec).grid}
                   levels={spec.levels}
                   rails
+                  numbers
                   head={sampleFor(spec).path[0] ?? null}
                   className="mx-auto max-w-[16rem]"
                 />
@@ -125,6 +126,7 @@ export function Waiting({
               grid={view.reveal.target}
               levels={round.levels}
               rails
+              numbers
               wrong={view.solved ? undefined : view.reveal.differences}
               className="mx-auto max-w-xs"
             />

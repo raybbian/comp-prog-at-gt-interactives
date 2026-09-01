@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { Briefing } from './routes/Briefing.tsx';
 import { Waiting } from './routes/Waiting.tsx';
-import { ROUNDS, buildPuzzle, sampleFor } from './protocol/rounds.ts';
+import { type RoundSpec, ROUNDS, buildPuzzle, sampleFor } from './protocol/rounds.ts';
 import type { PlayerView, Role } from './protocol/types.ts';
 
 /**
@@ -62,10 +62,11 @@ describe('App', () => {
  * describing a shape the receiver has never seen the like of is not agreeing a protocol.
  */
 describe('protocol time', () => {
-  const spec = ROUNDS[2];
-  if (spec === undefined) throw new Error('missing round');
+  const mono = ROUNDS[2];
+  const coloured = ROUNDS.find((r) => r.levels > 1);
+  if (mono === undefined || coloured === undefined) throw new Error('missing round');
 
-  const viewFor = (role: Role, phase: 'brief' | 'done' = 'brief'): PlayerView =>
+  const viewFor = (role: Role, phase: 'brief' | 'done', spec: RoundSpec): PlayerView =>
     ({
       kind: role,
       v: 1,
@@ -95,10 +96,10 @@ describe('protocol time', () => {
       ...(role === 'sender' ? { target: '' } : { grid: '', gridRev: 0, submittedAt: null }),
     }) as PlayerView;
 
-  const render = (role: Role, phase: 'brief' | 'done' = 'brief'): string =>
+  const render = (role: Role, phase: 'brief' | 'done' = 'brief', spec = mono): string =>
     renderToString(
       <Waiting
-        view={viewFor(role, phase)}
+        view={viewFor(role, phase, spec)}
         meeting={{ health: 'live' }}
         role={role}
         msLeft={60_000}
@@ -123,6 +124,15 @@ describe('protocol time', () => {
     }
   });
 
+  // Agreeing what to call a shade, off a picture that does not say which shade it is, is
+  // the same guessing game the numbers were added to the sender's grid to end.
+  it('numbers the colours on the example, for both of them', () => {
+    for (const role of ['sender', 'receiver'] as const) {
+      const html = render(role, 'brief', coloured);
+      expect(html).toMatch(/>[1-9]<\/span>/);
+    }
+  });
+
   // `SnakeGrid` draws a div per cell rather than emitting the grid string, so this
   // compares the rendered picture itself between the two roles.
   it('draws the same example for both halves of the team', () => {
@@ -140,8 +150,10 @@ describe('protocol time', () => {
   // If the example ever came from the meeting's seed it would be the answer, handed to the
   // receiver, before the round had started.
   it('is never the picture the round is actually played on', () => {
-    for (const seed of ['meeting-a', 'meeting-b', 'deadbeef']) {
-      expect(sampleFor(spec).grid).not.toBe(buildPuzzle(spec, seed).grid);
+    for (const round of ROUNDS) {
+      for (const seed of ['meeting-a', 'meeting-b', 'deadbeef']) {
+        expect(sampleFor(round).grid, round.id).not.toBe(buildPuzzle(round, seed).grid);
+      }
     }
   });
 });

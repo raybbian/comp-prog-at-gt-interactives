@@ -152,6 +152,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                         size={{ w: round.w, h: round.h }}
                         grid={view.reveal.target}
                         levels={round.levels}
+                        numbers
                       />
                     </div>
                   )}

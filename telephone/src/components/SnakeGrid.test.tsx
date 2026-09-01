@@ -31,6 +31,14 @@ describe('SnakeGrid numbers', () => {
     expect(html).toContain('rounded-full');
   });
 
+  // Drawn at 148px on the briefing slide and 360px at the reveal, so a fixed pixel size
+  // would be unreadable at one end and overflow the cell at the other.
+  it('sizes the level against its own cell rather than in pixels', () => {
+    const html = renderToString(<SnakeGrid size={size} grid={grid} levels={9} numbers />);
+    expect(html).toContain('58cqw / 4');
+    expect(html).toContain('inline-size');
+  });
+
   it('leaves the grid bare unless asked', () => {
     expect(digits(renderToString(<SnakeGrid size={size} grid={grid} levels={9} />))).toBe('');
   });

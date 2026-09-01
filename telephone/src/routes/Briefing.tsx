@@ -99,7 +99,7 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
                     return (
                       <figure key={spec.id} className="flex flex-col gap-2">
                         <div style={{ width: SAMPLE }}>
-                          <SnakeGrid size={spec.size} grid={grid} levels={spec.levels} />
+                          <SnakeGrid size={spec.size} grid={grid} levels={spec.levels} numbers />
                         </div>
                         <figcaption className="flex items-baseline justify-between">
                           <MicroLabel>{spec.index}</MicroLabel>

@@ -72,7 +72,6 @@ export function SnakeGrid({
   const interactive = onCellDown !== undefined;
   const wrongSet = wrong === undefined ? null : new Set(wrong);
   const showNumbers = numbers && levels > 1;
-  const digitClass = size.w > 10 ? 'text-[0.5rem]' : 'text-[0.6875rem]';
 
   const down = (cell: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
     if (onCellDown === undefined) return;
@@ -119,6 +118,10 @@ export function SnakeGrid({
           style={{
             gridTemplateColumns: `repeat(${size.w}, minmax(0, 1fr))`,
             aspectRatio: `${size.w} / ${size.h}`,
+            // The same grid is drawn at 148px on the briefing slide and 360px at the
+            // reveal, so the level is sized against its own cell rather than in pixels
+            // that would be unreadable at one end and overflowing at the other.
+            ...(showNumbers ? { containerType: 'inline-size' } : {}),
           }}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
@@ -171,10 +174,10 @@ export function SnakeGrid({
                 */}
                 {showNumbers && filled && (
                   <span
+                    style={{ fontSize: `calc(58cqw / ${size.w})` }}
                     className={cn(
                       'absolute inset-0 flex items-center justify-center font-mono leading-none tnum',
                       head === cell ? 'text-ink' : 'text-accent-ink',
-                      digitClass,
                     )}
                   >
                     {level}
