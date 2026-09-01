@@ -8,7 +8,7 @@ outreach. Each one lives in its own folder and shares a single design system.
 | `shared/` | `@cpatgt/shared` — theme, fonts, primitives, hooks, booth session |
 | `nim/`    | Nim against a bot that plays perfectly                           |
 | `milk/`   | Farmer John's contaminated bucket, against an adversary          |
-| `telephone/` | Two phones, eight digits a message, one picture to get across |
+| `telephone/` | Two phones, six digits a message, one picture to get across |
 
 ## Getting started
 
@@ -226,7 +226,7 @@ Discord QR, which plenty of scanners will refuse if it is inverted.
 
 A game for a room, not a booth. Two people to a team, a phone each, and they have to
 split up: one of them is shown a picture and the other has to reproduce it, using
-**messages of at most eight digits, 0 through 9, and nothing else**.
+**messages of at most six digits, 0 through 9, and nothing else**.
 
 That one restriction is the whole thing. You cannot say "row three is black" — you have
 to agree, in advance, on what a digit is going to mean. Everything the evening is
@@ -262,20 +262,18 @@ checks every round's generator against it over sixty seeds.
 | 4 | 8x8   | one colour, 24 cells, turning constantly | the walk stops paying — send the board |
 | 5 | 8x8   | colour blocks and turns, one message in five lost | say it twice, or number them and ask |
 
-**Nothing on screen states a target while the clock runs.** A number printed mid-round
-tells a team when to stop thinking, and the point is that there is always something better
-than what you have.
+**No number on screen ever says what a round was worth.** The right-hand column is for
+whoever is running the evening. A target printed mid-round tells a team when to stop
+thinking; the same target afterwards makes a pair who found something clever feel they
+merely matched a figure someone else chose. The point is that there is always something
+better than what you have, so teams find out what was possible by watching the standings
+and by asking the pair above them what they did.
 
-The results screen shows what the team sent beside **the theoretical best** — the
-information in that particular snake, divided by what eight digits can hold. It is
-deliberately not "the best any team managed": which team won is the leaderboard's job, and
-being beaten by nine messages teaches a pair much less than learning the picture was only
-ever worth two. `messageFloor` in `protocol/rounds.ts` computes it from the round's own
-generator — the choices the shape could have made and the structure inside the colours —
-and divides by `1 - dropRate`, so round 5's floor already allows for the messages its
-channel eats. It is an entropy estimate rather than a proof: a real encoder that squeezes
-the self-avoidance out of a path can beat it slightly, which is the right direction for a
-number teams are invited to chase.
+**Six digits a message** is the constant everything else is tuned against. It holds a
+shade under twenty bits, which is deliberately not a round number of anything: sixty-four
+grid cells do not divide by it, nor do thirty colour levels, so every round leaves a
+remainder a team has to decide what to do with. Eight digits made too many rounds land on
+the same two-message answer.
 
 **The first two rounds teach the two halves of the vocabulary, one at a time.** Round 0 is
 a straight line, so there is no shape to describe and the colours are the whole message —
@@ -293,8 +291,9 @@ round 2 the colours arrive in long blocks, so counting blocks beats listing cell
 3 every step is exactly one level up or down, so the whole sequence is a start value and
 twenty-nine bits: a pair who see that write nine digits where the pair beside them wrote
 thirty numbers. Round 4 takes colour away entirely and turns constantly, so describing the
-walk stops paying and the board itself — sixty-four cells, exactly eight messages of eight
-binary digits — becomes the cheaper thing to send, by the packing trick they just learned.
+walk stops paying and the board itself — sixty-four cells, which six digits a message will
+not divide evenly — becomes the cheaper thing to send, by the packing trick they just
+learned and with a remainder to place.
 
 Those four are the lesson that generalises: the same picture, on the same grid, wants a
 different encoding depending on what is inside it. There is no universal answer, you have

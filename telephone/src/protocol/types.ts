@@ -55,12 +55,6 @@ export type PublicRound = {
 export type Reveal = {
   readonly target: string;
   readonly differences: readonly number[];
-  /**
-   * How few messages this picture could have taken — the information in it, not a record
-   * anyone set. Which team did best is the leaderboard's job; this is the number that says
-   * what was on the table.
-   */
-  readonly floor: number;
 };
 
 export type StandingRow = {

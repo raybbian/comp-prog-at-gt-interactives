@@ -4,7 +4,7 @@ import { Banner } from '../components/Banner.tsx';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
-import { type RoundSpec, roundById, sampleFor } from '../protocol/rounds.ts';
+import { MAX_DIGITS, type RoundSpec, roundById, sampleFor } from '../protocol/rounds.ts';
 import type { PlayerView, Role } from '../protocol/types.ts';
 import type { Meeting } from '../state/useMeeting.ts';
 import { forgetSession, post } from '../transport/client.ts';
@@ -115,7 +115,7 @@ export function Waiting({
             </dl>
             <Rule />
             <p className="text-xs text-ink-faint">
-              Messages are digits only, eight at most, and every message counts.
+              Messages are digits only, {MAX_DIGITS} at most, and every message counts.
             </p>
           </div>
         )}
@@ -136,21 +136,10 @@ export function Waiting({
               wrong={view.solved ? undefined : view.reveal.differences}
               className="mx-auto max-w-xs"
             />
-            {/*
-              The floor appears here and nowhere else. On screen mid-round it would tell a
-              pair when to stop thinking; afterwards it is how they find out the picture
-              was only ever worth two messages.
-            */}
-            <dl className="flex flex-col gap-2 text-sm">
-              <Fact
-                label="You sent"
-                value={`${view.messagesUsed} message${view.messagesUsed === 1 ? '' : 's'}`}
-              />
-              <Fact
-                label="Theoretical best"
-                value={`${view.reveal.floor} message${view.reveal.floor === 1 ? '' : 's'}`}
-              />
-            </dl>
+            <p className="text-sm text-ink-muted">
+              {view.messagesUsed} message{view.messagesUsed === 1 ? '' : 's'}
+              {view.standing !== null && ` · ${view.standing.solved} solved so far`}
+            </p>
             <Rule />
             <div className="flex flex-col gap-6">
               <MessageLog

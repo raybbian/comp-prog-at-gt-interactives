@@ -60,7 +60,7 @@ export function isRoomCode(value: string): boolean {
 }
 
 /**
- * Messages are digits, and there are at most eight of them.
+ * Messages are digits, and there are only so many of them.
  *
  * Restricting the alphabet is the whole game. Let a letter through and the answer is
  * "row three is black"; keep it to digits and a team has to agree on what a digit means

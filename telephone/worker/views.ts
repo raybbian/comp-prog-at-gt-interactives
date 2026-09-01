@@ -9,7 +9,7 @@
  * result and asserts the answer is not in there, in case a future field smuggles it out.
  */
 
-import { ROUNDS, type RoundSpec, messageFloor } from '../src/protocol/rounds.ts';
+import { ROUNDS, type RoundSpec } from '../src/protocol/rounds.ts';
 import { differences, rank, tally } from '../src/protocol/score.ts';
 import type {
   HostTeamRow,
@@ -90,7 +90,6 @@ function revealFor(
   return {
     target,
     differences: round === null ? [] : differences(target, round.grid),
-    floor: messageFloor(spec, puzzleFor(state.meta, spec)),
   };
 }
 

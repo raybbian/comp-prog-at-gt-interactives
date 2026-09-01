@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUNDS, buildPuzzle, messageFloor } from '../src/protocol/rounds.ts';
+import { ROUNDS } from '../src/protocol/rounds.ts';
 import {
   advance,
   closeRound,
@@ -271,55 +271,6 @@ describe('seats', () => {
     expect(resolve(state, senderSession, NOW).ok).toBe(false);
     // Free rather than contested, so the pair can swap round without a takeover.
     expect(join(state, team.code, 'sender', false, NOW).ok).toBe(true);
-  });
-});
-
-describe('the theoretical best', () => {
-  const revealOf = (state: State, team: Parameters<typeof buildReceiverView>[1]) => {
-    advance(state.meta, NOW); // -> reveal
-    return buildReceiverView(state, team, NOW).reveal;
-  };
-
-  it('is a whole number of messages on every round, whatever the seed', () => {
-    for (const spec of ROUNDS) {
-      for (const seed of ['a', 'b', 'c', 'd']) {
-        const floor = messageFloor(spec, buildPuzzle(spec, seed));
-        expect(Number.isInteger(floor), `${spec.id} ${seed}`).toBe(true);
-        expect(floor, `${spec.id} ${seed}`).toBeGreaterThanOrEqual(1);
-        // If the floor ever reached what a naive encoding costs, the round would have
-        // nothing to teach — a cell at a time is the thing it has to beat.
-        expect(floor, `${spec.id} ${seed}`).toBeLessThan(spec.size.w * spec.size.h);
-      }
-    }
-  });
-
-  it('costs nothing for a shape the receiver was already given', () => {
-    const given = ROUNDS.find((r) => r.shapeGiven);
-    const drawn = ROUNDS.find((r) => !r.shapeGiven && r.levels > 1);
-    if (given === undefined || drawn === undefined) throw new Error('missing rounds');
-    // Same information in the colours either way; the one that must also describe the
-    // snake cannot be cheaper.
-    expect(messageFloor(given, buildPuzzle(given, 'a'))).toBeLessThanOrEqual(
-      messageFloor(drawn, buildPuzzle(drawn, 'a')) + given.size.w,
-    );
-  });
-
-  /** Five messages have to be sent for every four that land, and the floor says so. */
-  it('allows for the messages the lossy round eats', () => {
-    const lossy = ROUNDS.find((r) => r.dropRate > 0);
-    if (lossy === undefined) throw new Error('no lossy round');
-    const clean = { ...lossy, dropRate: 0 };
-    expect(messageFloor(lossy, buildPuzzle(lossy, 'a'))).toBeGreaterThan(
-      messageFloor(clean, buildPuzzle(clean, 'a')) - 1,
-    );
-  });
-
-  it('reaches the player on the reveal, and not before', () => {
-    const state = meeting();
-    const { team } = seated(state);
-    playRound(state, 1);
-    expect(buildReceiverView(state, team, NOW).reveal).toBeNull();
-    expect(revealOf(state, team)?.floor).toBeGreaterThanOrEqual(1);
   });
 });
 

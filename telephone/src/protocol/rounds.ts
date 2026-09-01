@@ -23,7 +23,7 @@ import type { CellIndex } from './grid.ts';
 import { type Rng, rngFrom } from './rng.ts';
 
 /** Digits 0-9, and the cap that makes the whole thing a puzzle. */
-export const MAX_DIGITS = 8;
+export const MAX_DIGITS = 6;
 
 /** Levels a body cell can take on the coloured round. '0' is reserved for empty. */
 export const RAMP_LEVELS = 9;
@@ -151,9 +151,9 @@ export const ROUNDS: readonly RoundSpec[] = [
     index: 4,
     size: { w: 8, h: 8 },
     // Turns everywhere, so describing the walk stops paying and the board itself becomes
-    // the cheaper thing to send. Sixty-four cells is not an accident: eight messages of
-    // eight binary digits is the whole grid, exactly — and a team that packed bits last
-    // round already knows how to do it in three.
+    // the cheaper thing to send. Sixty-four cells against six digits a message is a
+    // deliberate mismatch: no clean split falls out, so a team that packed bits last round
+    // has to decide what to do with the remainder.
     shape: { kind: 'induced', length: 24 },
     levels: 1,
     colouring: { kind: 'varied' },
@@ -192,56 +192,6 @@ export const ROUNDS: readonly RoundSpec[] = [
  * pair plans against during protocol time is the one they were shown at the briefing.
  */
 export const SAMPLE_SEED = 'briefing';
-
-/** What one message can carry: eight digits, each worth log2(10) bits. */
-const BITS_PER_MESSAGE = MAX_DIGITS * Math.log2(10);
-
-function shapeBits(spec: RoundSpec, path: readonly CellIndex[]): number {
-  if (spec.shapeGiven) return 0;
-  // Where it starts, and which way it leaves.
-  const opening = Math.log2(spec.size.w * spec.size.h) + 2;
-  if (spec.shape.kind === 'straight') {
-    return opening + Math.log2(spec.shape.maxLength - spec.shape.minLength + 1);
-  }
-  if (spec.shape.kind === 'rectilinear') {
-    const runs = Math.log2(spec.shape.maxRun - spec.shape.minRun + 1);
-    // Per segment: which way it turned, and how far it went.
-    return opening + spec.shape.segments * (1 + runs);
-  }
-  // An induced path never doubles back, so every step after the first is one of three.
-  return opening + Math.max(0, path.length - 1) * Math.log2(3);
-}
-
-function colourBits(spec: RoundSpec, levels: readonly number[]): number {
-  if (spec.levels <= 1) return 0;
-  const opening = Math.log2(spec.levels);
-  const rest = Math.max(0, levels.length - 1);
-  if (spec.colouring.kind === 'steps') return opening + rest;
-  if (spec.colouring.kind === 'splotches') {
-    const blocks = levels.filter((v, i) => i === 0 || v !== levels[i - 1]).length;
-    const lengths = Math.log2(spec.colouring.maxRun - spec.colouring.minRun + 1);
-    return opening + (blocks - 1) * Math.log2(spec.levels - 1) + blocks * lengths;
-  }
-  return opening + rest * Math.log2(spec.levels - 1);
-}
-
-/**
- * How few messages the picture could have taken.
- *
- * Not a record anybody set — it is the information in this particular snake divided by
- * what eight digits can hold. A team that sent forty messages is not told they were beaten
- * by nine; they are told the picture was only ever worth two, which is a different and
- * more useful thing to know.
- *
- * It is an entropy estimate rather than a proof: the step counts are what the generator
- * could have chosen, and a real encoder squeezing the self-avoidance out of a path can do
- * slightly better. Shown as a floor to aim at, never as a score.
- */
-export function messageFloor(spec: RoundSpec, puzzle: Puzzle): number {
-  const bits = shapeBits(spec, puzzle.path) + colourBits(spec, puzzle.levels);
-  // A channel that swallows one message in five needs five sent for every four that land.
-  return Math.max(1, Math.ceil(bits / BITS_PER_MESSAGE / (1 - spec.dropRate)));
-}
 
 export function roundById(id: string): RoundSpec | null {
   return ROUNDS.find((r) => r.id === id) ?? null;
