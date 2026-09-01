@@ -1,6 +1,7 @@
 import { MicroLabel, cn, useFitScale } from '@cpatgt/shared';
 import logoUrl from '@cpatgt/shared/assets/logo.png';
 import { useEffect } from 'react';
+import { FitMono } from '../components/FitMono.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
 import { formatClock } from '../format.ts';
 import type { HostTeamRow, HostView } from '../protocol/types.ts';
@@ -117,7 +118,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                 <>
                   <div className="flex flex-col gap-4">
                     <MicroLabel size="xl">Join on your phone at</MicroLabel>
-                    <p className="font-mono text-[4rem] leading-none tnum text-ink">{host}</p>
+                    <FitMono text={host} max="4rem" className="text-ink" />
                   </div>
                   {/*
                     The code is the largest thing on the screen for the whole of the lobby,

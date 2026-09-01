@@ -1,5 +1,6 @@
 import { MicroLabel, useFitScale } from '@cpatgt/shared';
 import logoUrl from '@cpatgt/shared/assets/logo.png';
+import { FitMono } from '../components/FitMono.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
 import { MAX_DIGITS, ROUNDS, sampleFor } from '../protocol/rounds.ts';
 
@@ -60,7 +61,7 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
 
               <div className="flex flex-col gap-3 border-t border-hairline pt-8">
                 <MicroLabel size="lg">Join on your phone</MicroLabel>
-                <p className="font-mono text-[3.25rem] leading-none tnum">{host}</p>
+                <FitMono text={host} max="3.25rem" />
               </div>
 
               <ol className="flex flex-col gap-3 text-[1.5rem] leading-snug text-ink-muted">
