@@ -192,14 +192,47 @@ export function generateRectilinear(
  * construction, which is what makes run-length encoding actively worse here than
  * sending the levels raw.
  */
-export function generateRamp(rng: Rng, length: number, levels: number): number[] {
+/** A level in `1..levels` that is not `avoid`, so a run always ends where it looks like it does. */
+function otherLevel(rng: Rng, levels: number, avoid: number): number {
+  const pick = 1 + randInt(rng, levels - 1);
+  return pick >= avoid ? pick + 1 : pick;
+}
+
+/**
+ * Every cell a different colour from the one before it.
+ *
+ * The teaching round's whole job is that a colour has to be said out loud, one per cell,
+ * before anyone has thought about being clever. Repeats would let a pair get lucky and
+ * skip the only thing the round is for.
+ */
+export function generateVaried(rng: Rng, length: number, levels: number): number[] {
   const out: number[] = [1 + randInt(rng, levels)];
   for (let n = 1; n < length; n += 1) {
-    const previous = out[n - 1] as number;
-    let next = previous + (randInt(rng, 3) - 1);
-    if (next < 1) next = previous + 1;
-    if (next > levels) next = previous - 1;
-    out.push(next);
+    out.push(otherLevel(rng, levels, out[n - 1] as number));
+  }
+  return out;
+}
+
+/**
+ * Long blocks of one colour, so run-length encoding is the thing that wins.
+ *
+ * The pair who send a colour per cell pay the length of the snake; the pair who notice the
+ * blocks pay the number of blocks. That gap is the round, which is why the runs are long
+ * enough that counting them is obviously worth doing.
+ */
+export function generateSplotches(
+  rng: Rng,
+  length: number,
+  levels: number,
+  minRun: number,
+  maxRun: number,
+): number[] {
+  const out: number[] = [];
+  let level = 1 + randInt(rng, levels);
+  while (out.length < length) {
+    const run = minRun + randInt(rng, maxRun - minRun + 1);
+    for (let i = 0; i < run && out.length < length; i += 1) out.push(level);
+    level = otherLevel(rng, levels, level);
   }
   return out;
 }

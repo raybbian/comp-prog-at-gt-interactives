@@ -61,8 +61,10 @@ export function RoundBar({
 
       <span
         className={cn(
-          'font-mono text-base tnum',
-          msLeft > 0 && msLeft <= 60_000 ? 'text-accent' : 'text-ink',
+          'font-mono tnum',
+          msLeft > 0 && msLeft <= 60_000
+            ? 'text-lg font-semibold text-accent'
+            : 'text-base text-ink',
         )}
       >
         {formatClock(msLeft)}

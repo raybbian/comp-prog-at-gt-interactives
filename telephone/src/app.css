@@ -15,11 +15,10 @@
  * `bg-snake-*`, and only on a grid cell. The shared ochre accent still means exactly one
  * thing, and twenty coloured squares on a board must not be allowed to dilute it.
  *
- * The ramp is ORDERED, and that is load-bearing rather than decorative. The coloured
- * round's whole insight is that neighbouring cells along the snake look alike, so the
- * picture has to *show* that before anyone reasons about it: level 4 sits between 3 and
- * 5 in lightness and in hue, so a smooth gradient crawling along the body is visible at
- * a glance.
+ * The ramp is ORDERED, and that is load-bearing rather than decorative: level 4 sits
+ * between 3 and 5 in lightness and in hue, so a misread is a near miss rather than an
+ * arbitrary one, and the boundary between two colour blocks is visible at a glance —
+ * which is the thing a team has to count on the shape-given round.
  *
  * Lightness rises with level in BOTH modes — never inverted for dark. The two halves of
  * a team are looking at different phones, and a ramp that reversed between a light one

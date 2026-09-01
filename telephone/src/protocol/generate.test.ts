@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bodyCells } from './grid.ts';
-import { generateRamp } from './generate.ts';
+import { generateSplotches, generateVaried } from './generate.ts';
 import { isInducedPath, orderPath } from './paths.ts';
 import { RAMP_LEVELS, ROUNDS, buildPuzzle } from './rounds.ts';
 import { rngFrom } from './rng.ts';
@@ -80,34 +80,59 @@ describe('puzzle generation', () => {
   });
 });
 
-describe('the colour ramp', () => {
-  it('never steps by more than one level', () => {
+describe('the colours', () => {
+  const runsOf = (levels: readonly number[]): number =>
+    levels.filter((v, i) => i === 0 || v !== levels[i - 1]).length;
+
+  it('never repeats a colour back to back on the teaching round', () => {
     for (const seed of SEEDS) {
-      const levels = generateRamp(rngFrom(seed), 200, RAMP_LEVELS);
-      for (let i = 1; i < levels.length; i += 1) {
-        const previous = levels[i - 1] as number;
-        const current = levels[i] as number;
-        expect(Math.abs(current - previous), seed).toBeLessThanOrEqual(1);
-        expect(current).toBeGreaterThanOrEqual(1);
-        expect(current).toBeLessThanOrEqual(RAMP_LEVELS);
+      const levels = generateVaried(rngFrom(seed), 200, RAMP_LEVELS);
+      expect(runsOf(levels), seed).toBe(levels.length);
+      for (const level of levels) {
+        expect(level).toBeGreaterThanOrEqual(1);
+        expect(level).toBeLessThanOrEqual(RAMP_LEVELS);
       }
     }
   });
 
   /**
-   * The round only teaches what it is meant to teach if run-length encoding loses. Runs
-   * average about one and a half cells, so a (value, length) pair per run costs more
-   * than simply writing the levels out — which is the number that goes on the projector.
+   * The round only teaches what it is meant to teach if run-length encoding wins. A (run,
+   * colour) pair costs two numbers, so runs have to average well over two cells before
+   * counting them beats writing the colours out one at a time.
    */
-  it('leaves runs too short for run-length encoding to pay', () => {
+  it('leaves runs long enough for run-length encoding to pay', () => {
     let cells = 0;
     let runs = 0;
     for (const seed of SEEDS) {
-      const levels = generateRamp(rngFrom(seed), 200, RAMP_LEVELS);
+      const levels = generateSplotches(rngFrom(seed), 200, RAMP_LEVELS, 3, 8);
       cells += levels.length;
-      runs += levels.filter((v, i) => i === 0 || v !== levels[i - 1]).length;
+      runs += runsOf(levels);
     }
-    const meanRun = cells / runs;
-    expect(meanRun).toBeLessThan(2);
+    expect(cells / runs).toBeGreaterThan(3);
+  });
+
+  it('ends every splotch where it looks like it ends', () => {
+    for (const seed of SEEDS) {
+      const levels = generateSplotches(rngFrom(seed), 200, RAMP_LEVELS, 3, 8);
+      // A run that happened to be followed by its own colour would read as one long run
+      // and make the drawing disagree with the count a team sent.
+      let run = 1;
+      for (let i = 1; i < levels.length; i += 1) {
+        if (levels[i] === levels[i - 1]) run += 1;
+        else run = 1;
+        expect(run, seed).toBeLessThanOrEqual(8);
+      }
+    }
+  });
+
+  it('gives the shape-given round few enough runs to be worth counting', () => {
+    const spec = ROUNDS.find((r) => r.shapeGiven);
+    if (spec === undefined) throw new Error('missing shape-given round');
+    for (const seed of SEEDS.slice(0, 20)) {
+      const { levels } = buildPuzzle(spec, seed);
+      // Sending a colour per cell costs `levels.length`; counting the blocks costs two
+      // numbers per block. The second has to be clearly cheaper or the round is pointless.
+      expect(runsOf(levels) * 2, seed).toBeLessThan(levels.length);
+    }
   });
 });

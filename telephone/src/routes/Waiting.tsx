@@ -1,5 +1,6 @@
 import { AppShell, Button, MicroLabel, Rule } from '@cpatgt/shared';
 import { useState } from 'react';
+import { Banner } from '../components/Banner.tsx';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
@@ -118,9 +119,11 @@ export function Waiting({
 
         {phase === 'reveal' && round !== null && view.reveal !== null && (
           <div className="flex flex-col gap-4">
-            <MicroLabel as="h1" className="text-ink">
-              {view.solved ? 'Solved' : 'Not this time'}
-            </MicroLabel>
+            <Banner
+              tone="done"
+              title={view.solved ? 'Solved' : 'Time up'}
+              {...(view.solved ? {} : { detail: 'Not solved. The answer is below.' })}
+            />
             <SnakeGrid
               size={{ w: round.w, h: round.h }}
               grid={view.reveal.target}

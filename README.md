@@ -253,45 +253,44 @@ checks every round's generator against it over sixty seeds.
 
 ### The rounds
 
-| # | Grid | Snake | Naive costs | A good encoding costs | What the gap is about |
-| - | ---- | ----- | ----------- | --------------------- | --------------------- |
-| 0 | 6x6   | a straight line, in colour | 2 | 1 | nothing — warm-up, and off the record |
-| 1 | 6x6   | 12 cells                   | 5 | 2 | a digit holds 3.3 bits and you are using one |
-| 2 | 8x8   | 20 cells                   | 8 | 2 | send the differences, not the positions |
-| 3 | 10x10 | 30 cells, 9 colours, shape given | 4 | 2 | neighbours look alike, so send the change |
-| 4 | 12x12 | 6 long runs                | 18 | 2 | describe the snake, do not draw it |
-| 5 | 8x8   | 14 cells, one message in five is lost | 3 blind, and hope | 6 | say it twice, or number them and ask |
+| # | Grid | Snake | Teaches | What the gap is about |
+| - | ---- | ----- | ------- | --------------------- |
+| 0 | 6x6   | a straight line, every cell a different colour | colour | nothing — warm-up, and off the record |
+| 1 | 8x8   | one colour, four straight runs, three turns | shape | say the turns, not the cells |
+| 2 | 10x10 | 30 cells in six colour blocks, shape given | both | count the blocks, do not list the cells |
+| 3 | 8x8   | one colour, 24 cells, turning constantly | both | the walk stops paying — send the board |
+| 4 | 8x8   | colour blocks and turns, one message in five lost | both | say it twice, or number them and ask |
 
 **Nothing on screen ever states those numbers.** The right-hand column is for whoever is
 running the evening; a target printed on the projector tells a team when to stop thinking,
 and the point is that there is always something better than what you have. Teams find out
 what was possible by watching the standings.
 
-Round 0 exists so that nobody loses. A naive protocol is genuinely good enough there, and
-both phones get to prove they are paired while both people find the keypad and the colour
-ribbon before anything is at stake. It is also the window in which stragglers are still
-joining, which is why it does not count.
+**The first two rounds teach the two halves of the vocabulary, one at a time.** Round 0 is
+a straight line, so there is no shape to describe and the colours are the whole message —
+and every cell is a different colour, so a pair cannot get lucky and skip the only thing
+the round is for. Round 1 is its mirror: one colour, so the shape is the whole message,
+with few enough turns that "four right, then three down" is sayable before anyone has been
+clever. Meeting either of those for the first time with a clock running and a partner
+waiting is the wrong moment, which is why they come first and why round 0 does not count.
+Round 0 is also the window in which stragglers are still joining.
 
-**It is deliberately the coloured round as well as the easy one.** The palette is half the
-vocabulary of this game, and meeting it for the first time three rounds in — with a clock
-running and a partner waiting — is the wrong moment to work out what a level is. Round 0
-is where a team learns to draw a snake *and* colour it, for free.
+**The last three are each a different reason the obvious encoding is not the good one.**
+Round 2 hands over the shape, so the colours are the entire puzzle, and they arrive in long
+blocks: a colour per cell costs thirty numbers, counting the blocks costs about twelve.
+Round 3 takes the colour away again and turns constantly, so describing the walk stops
+paying and the board itself — sixty-four cells, which is exactly eight messages of eight
+binary digits — becomes the cheaper thing to send. That pair is the lesson that
+generalises: there is no universal answer, you have to look at the source.
 
-No board is wider than twelve cells, which is the other thing round sizes are chosen for:
-at twelve across, a cell is about 28 points on a phone, and every grid in the game stays
+No board is wider than ten cells, which is the other thing round sizes are chosen for: at
+ten across, a cell is about 34 points on a phone, and every grid in the game stays
 comfortably tappable without anyone pinching to zoom.
 
-Round 4 is the one to protect if the schedule slips. Round 2's winning trick is several
-times worse there, on a grid that looks superficially similar, which is the lesson that
-generalises: there is no universal answer, you have to look at the source. Round 3 sits
-between them on purpose — having just learned that colour has structure worth exploiting,
-a team meets a shape whose structure is worth exploiting too, and the second insight lands
-as a generalisation of the first rather than as another trick.
-
-Round 5 is the only round with a lossy channel, and that placement is deliberate. A lost
+Round 4 is the only round with a lossy channel, and that placement is deliberate. A lost
 message in a *sequential* encoding desynchronises everything after it and the receiver
-cannot know, so dropping messages on rounds 2 through 4 would punish the cleverest teams
-hardest. Its payload is a bitmap, which degrades one cell at a time. It is also
+cannot know, so dropping messages on rounds 2 or 3 would punish the cleverest teams
+hardest. It is also
 **additive only** — solving it can win a team a place, its message count cannot cost them
 one — because every team loses the same *number* of messages but not the same ones. Flip
 `additiveOnly` in `protocol/rounds.ts` to put it on the board with the rest.
@@ -462,9 +461,8 @@ filling it in matches the structure of the message.
 The shared accent still means exactly one thing, and twenty coloured squares on a board
 must not be allowed to dilute it.
 
-The ramp is *ordered*, and that is load-bearing rather than decorative: the coloured
-round's whole insight is that neighbouring cells look alike, so the picture has to show it
-before anyone reasons about it. Lightness rises with level in both light and dark — never
+The ramp is *ordered*, and that is load-bearing rather than decorative. Lightness rises
+with level in both light and dark — never
 inverted for dark mode, because the two halves of a team are looking at different phones
 and a ramp that reversed between them would have them describing opposite things in the
 same words. That monotonicity is also what keeps the order readable for colourblind

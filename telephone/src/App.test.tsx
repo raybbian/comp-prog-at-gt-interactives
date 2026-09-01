@@ -62,7 +62,7 @@ describe('App', () => {
  * describing a shape the receiver has never seen the like of is not agreeing a protocol.
  */
 describe('protocol time', () => {
-  const mono = ROUNDS[2];
+  const mono = ROUNDS.find((r) => r.levels === 1);
   const coloured = ROUNDS.find((r) => r.levels > 1);
   if (mono === undefined || coloured === undefined) throw new Error('missing round');
 
@@ -144,7 +144,7 @@ describe('protocol time', () => {
     expect(sender).toBe(example(render('receiver')));
     // The rails are the point: you cannot agree on "row three" if neither of you can see
     // which row is three.
-    expect(sender).toContain('grid-template-columns:repeat(8');
+    expect(sender).toContain(`grid-template-columns:repeat(${mono.size.w}`);
   });
 
   // If the example ever came from the meeting's seed it would be the answer, handed to the
