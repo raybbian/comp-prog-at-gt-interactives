@@ -10,7 +10,7 @@ export function formatClock(ms: number): string {
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-/** `471203` -> `471 203`. A run of digits is hard to keep your place in; threes are not. */
+/** `47120394` -> `471 203 94`. Eight digits are hard to keep your place in; three are not. */
 export function groupDigits(digits: string): string {
   return digits.replace(/(.{3})/g, '$1 ').trim();
 }

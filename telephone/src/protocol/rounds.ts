@@ -23,7 +23,7 @@ import type { CellIndex } from './grid.ts';
 import { type Rng, rngFrom } from './rng.ts';
 
 /** Digits 0-9, and the cap that makes the whole thing a puzzle. */
-export const MAX_DIGITS = 6;
+export const MAX_DIGITS = 8;
 
 /** Levels a body cell can take on the coloured round. '0' is reserved for empty. */
 export const RAMP_LEVELS = 9;
@@ -151,9 +151,9 @@ export const ROUNDS: readonly RoundSpec[] = [
     index: 4,
     size: { w: 8, h: 8 },
     // Turns everywhere, so describing the walk stops paying and the board itself becomes
-    // the cheaper thing to send. Sixty-four cells against six digits a message is a
-    // deliberate mismatch: no clean split falls out, so a team that packed bits last round
-    // has to decide what to do with the remainder.
+    // the cheaper thing to send. Sixty-four cells is not an accident: eight messages of
+    // eight binary digits is the whole grid, exactly — and a team that packed bits last
+    // round already knows how to do it in three.
     shape: { kind: 'induced', length: 24 },
     levels: 1,
     colouring: { kind: 'varied' },

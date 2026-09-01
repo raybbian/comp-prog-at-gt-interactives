@@ -2,10 +2,10 @@ import { MicroLabel, cn } from '@cpatgt/shared';
 import { MAX_DIGITS } from '../protocol/rounds.ts';
 
 /**
- * The message being typed, as a fixed track of slots.
+ * The message being typed, as a fixed track of eight slots.
  *
  * Fixed rather than growing, so the budget is a thing you can see rather than a number
- * you have to remember — the whole game is about what fits in one message.
+ * you have to remember — the whole game is about what fits in eight digits.
  */
 export function Composer({ digits, max = MAX_DIGITS }: { digits: string; max?: number }) {
   const left = max - digits.length;

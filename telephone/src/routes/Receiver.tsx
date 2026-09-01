@@ -21,7 +21,7 @@ import { Waiting } from './Waiting.tsx';
  *
  * A readable message log and a usable grid do not both fit on a phone, so they are tabs —
  * with the message you are currently working from pinned above both, because losing your
- * place in a string of digits is the single most common way a round goes wrong.
+ * place in an eight-digit string is the single most common way a round goes wrong.
  */
 /** A message-shaped gap, so the box does not resize when the first one lands. */
 const EMPTY_SLOTS = '\u00b7'.repeat(MAX_DIGITS);

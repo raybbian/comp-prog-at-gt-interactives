@@ -127,7 +127,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                     </p>
                   </div>
                   <p className="max-w-[900px] text-[2.25rem] leading-tight text-ink-muted">
-                    One of you sees a snake. The other has to draw it. You get six digits a
+                    One of you sees a snake. The other has to draw it. You get eight digits a
                     message, and nothing else.
                   </p>
                 </>
