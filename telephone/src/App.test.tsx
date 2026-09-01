@@ -81,7 +81,6 @@ describe('protocol time', () => {
         shapeGiven: spec.shapeGiven,
         lossy: spec.dropRate > 0,
         counts: spec.counts,
-        brief: spec.brief,
         phase,
         phaseEndsAt: null,
         snakeLength: 0,

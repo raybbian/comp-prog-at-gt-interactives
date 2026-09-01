@@ -57,11 +57,13 @@ export function PathStrip({
             onClick={() => onCursor(i)}
             aria-label={`Cell ${i + 1}`}
             className={cn(
-              'relative aspect-square',
+              'relative flex aspect-square items-center justify-center font-mono text-[0.625rem] leading-none tnum text-accent-ink',
               LEVEL_CLASS[level] ?? 'bg-ground-sunken',
               i === cursor && 'ring-2 ring-accent ring-inset',
             )}
-          />
+          >
+            {level >= 1 ? level : ''}
+          </button>
         ))}
       </div>
 

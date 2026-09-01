@@ -55,7 +55,6 @@ export type RoundSpec = {
   /** Can only add to a team's total, never cost them a place. */
   readonly additiveOnly: boolean;
   /** One line on the projector. Says what to do, never how. */
-  readonly brief: string;
 };
 
 const MINUTE = 60_000;
@@ -76,7 +75,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 2 * MINUTE,
     counts: false,
     additiveOnly: false,
-    brief: 'A warm-up. Send the line, and its colours.',
   },
   {
     id: 'r1',
@@ -90,7 +88,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 4 * MINUTE,
     counts: true,
     additiveOnly: false,
-    brief: 'Black and white now, but it bends.',
   },
   {
     id: 'r2',
@@ -104,7 +101,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 5 * MINUTE,
     counts: true,
     additiveOnly: false,
-    brief: 'A longer snake on a bigger board.',
   },
   {
     id: 'r3',
@@ -118,7 +114,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 5 * MINUTE,
     counts: true,
     additiveOnly: false,
-    brief: 'You both have the shape. Only the colours are missing.',
   },
   {
     id: 'r4',
@@ -132,7 +127,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 5 * MINUTE,
     counts: true,
     additiveOnly: false,
-    brief: 'Six long straight runs.',
   },
   {
     id: 'r5',
@@ -146,7 +140,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     playMs: 4 * MINUTE,
     counts: true,
     additiveOnly: true,
-    brief: 'One message in five will be lost. You will not be told which.',
   },
 ];
 

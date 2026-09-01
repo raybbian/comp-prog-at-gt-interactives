@@ -74,7 +74,6 @@ function publicRound(meta: Meta, spec: RoundSpec, snakeLength: number): PublicRo
     shapeGiven: spec.shapeGiven,
     lossy: spec.dropRate > 0,
     counts: spec.counts,
-    brief: spec.brief,
     phase: meta.phase,
     phaseEndsAt: meta.phaseEndsAt,
     snakeLength,

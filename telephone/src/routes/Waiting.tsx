@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
-import { roundById, sampleFor } from '../protocol/rounds.ts';
+import { type RoundSpec, roundById, sampleFor } from '../protocol/rounds.ts';
 import type { PlayerView, Role } from '../protocol/types.ts';
 import type { Meeting } from '../state/useMeeting.ts';
 import { forgetSession, post } from '../transport/client.ts';
@@ -66,8 +66,7 @@ export function Waiting({
               You&apos;re in
             </h1>
             <p className="text-sm text-ink-muted">
-              You are the one who {role === 'sender' ? 'sees the snake' : 'draws it'}. Wait for
-              the round to start.
+              You are the one who {role === 'sender' ? 'sees the snake' : 'draws it'}.
             </p>
           </div>
         )}
@@ -77,9 +76,7 @@ export function Waiting({
             <h1 className="text-3xl font-semibold tracking-[-0.02em] text-ink">
               Agree on a protocol
             </h1>
-            <p className="text-sm text-ink-muted">
-              Round {round.index}. {round.brief}
-            </p>
+            <MicroLabel as="h2">Round {round.index}</MicroLabel>
             {/*
               Both halves of a team see this, and both see the same one — it is drawn from
               a fixed seed rather than the meeting's, so it says nothing about the picture
@@ -97,20 +94,18 @@ export function Waiting({
                   head={sampleFor(spec).path[0] ?? null}
                   className="mx-auto max-w-[16rem]"
                 />
-                <p className="text-xs text-ink-faint">
-                  You are both looking at this. Work out how you would send it.
-                </p>
               </div>
             )}
             <Rule />
             <dl className="flex flex-col gap-2 text-sm">
               <Fact label="Grid" value={`${round.w} by ${round.h}`} />
               <Fact label="Snake" value={`${round.snakeLength} cells`} />
+              {spec !== null && <Fact label="Shape" value={shapeOf(spec)} />}
               <Fact
                 label="Colours"
                 value={round.levels > 1 ? `${round.levels} levels` : 'Black and white'}
               />
-              {round.lossy && <Fact label="Channel" value="One in five will be lost" />}
+              {round.lossy && <Fact label="Channel" value="One in five lost, never told which" />}
               {!round.counts && <Fact label="Scoring" value="Warm-up — off the record" />}
             </dl>
             <Rule />
@@ -222,6 +217,14 @@ function LeaveSeat({ role }: { role: Role }) {
       </div>
     </div>
   );
+}
+
+/** What the round's prose used to say, as a fact the spec already knows. */
+function shapeOf(spec: RoundSpec): string {
+  if (spec.shapeGiven) return 'Drawn for you — colours only';
+  if (spec.shape.kind === 'straight') return 'One straight line';
+  if (spec.shape.kind === 'rectilinear') return `${spec.shape.segments} straight runs`;
+  return 'Bends anywhere';
 }
 
 function Fact({ label, value }: { label: string; value: string }) {

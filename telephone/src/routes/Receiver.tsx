@@ -175,7 +175,7 @@ export function Receiver({
               onCellDown={round.shapeGiven ? undefined : editor.beginAt}
               onCellEnter={round.shapeGiven ? undefined : editor.dragTo}
               onPointerUp={editor.endStroke}
-              className="mx-auto max-w-full"
+              className="mx-auto max-h-[38dvh] max-w-full"
             />
 
             {!round.shapeGiven && (
@@ -201,16 +201,24 @@ export function Receiver({
             {/* Any round with colours gets the ribbon, not just the one where the shape
                 is handed over: on a coloured round you have drawn the snake and still have
                 to say what colour each cell is, and hunting a thirty-pixel target in two
-                dimensions is the wrong way to enter thirty levels on a phone. */}
+                dimensions is the wrong way to enter thirty levels on a phone.
+
+                Stuck to the bottom of the viewport rather than left to scroll: it is the
+                control you use once per cell for thirty cells, and a decode that makes you
+                scroll back to it between every digit is a decode nobody finishes. Sticky
+                rather than fixed, so it comes to rest above the Submit rail instead of
+                covering it. */}
             {round.levels > 1 && editor.path.length > 0 && (
-              <PathStrip
-                levels={editor.levels}
-                cursor={editor.cursor}
-                levelCount={round.levels}
-                onCursor={editor.setCursor}
-                onBump={editor.bumpAt}
-                onSet={editor.setLevelAt}
-              />
+              <div className="sticky bottom-0 z-10 border-t border-hairline bg-ground pb-2 pt-3">
+                <PathStrip
+                  levels={editor.levels}
+                  cursor={editor.cursor}
+                  levelCount={round.levels}
+                  onCursor={editor.setCursor}
+                  onBump={editor.bumpAt}
+                  onSet={editor.setLevelAt}
+                />
+              </div>
             )}
           </div>
         ) : (

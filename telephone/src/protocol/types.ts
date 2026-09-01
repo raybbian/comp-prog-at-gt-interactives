@@ -46,7 +46,6 @@ export type PublicRound = {
   readonly shapeGiven: boolean;
   readonly lossy: boolean;
   readonly counts: boolean;
-  readonly brief: string;
   readonly phase: Phase;
   readonly phaseEndsAt: number | null;
   readonly snakeLength: number;

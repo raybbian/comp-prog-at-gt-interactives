@@ -34,6 +34,15 @@ export type SnakeGridProps = {
   levels: number;
   /** Row and column indices down the edges. Nobody should count cells with a fingertip. */
   rails?: boolean | undefined;
+  /**
+   * The level written into each coloured cell.
+   *
+   * Nine steps of one ramp are not nine things the eye can name — neighbours differ by a
+   * shade, and a sender reading "is that a 4 or a 5" off a phone at arm's length is being
+   * asked to do the one part of this game that is not the game. The digit is the answer;
+   * the colour is the index.
+   */
+  numbers?: boolean | undefined;
   /** Cells that differ from the answer, shown only after the round is over. */
   wrong?: readonly number[] | undefined;
   /** The answer, drawn as a hairline outline behind the drawing at the reveal. */
@@ -51,6 +60,7 @@ export function SnakeGrid({
   grid,
   levels,
   rails = false,
+  numbers = false,
   wrong,
   ghost,
   head,
@@ -61,6 +71,8 @@ export function SnakeGrid({
 }: SnakeGridProps) {
   const interactive = onCellDown !== undefined;
   const wrongSet = wrong === undefined ? null : new Set(wrong);
+  const showNumbers = numbers && levels > 1;
+  const digitClass = size.w > 10 ? 'text-[0.5rem]' : 'text-[0.6875rem]';
 
   const down = (cell: number) => (event: ReactPointerEvent<HTMLDivElement>) => {
     if (onCellDown === undefined) return;
@@ -150,6 +162,16 @@ export function SnakeGrid({
                 )}
                 {head === cell && (
                   <span className="absolute inset-[30%] rounded-full bg-ground-raised" />
+                )}
+                {showNumbers && filled && head !== cell && (
+                  <span
+                    className={cn(
+                      'absolute inset-0 flex items-center justify-center font-mono leading-none tnum text-accent-ink',
+                      digitClass,
+                    )}
+                  >
+                    {level}
+                  </span>
                 )}
               </div>
             );

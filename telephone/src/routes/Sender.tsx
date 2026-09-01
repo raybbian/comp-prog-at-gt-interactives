@@ -97,6 +97,7 @@ export function Sender({
             grid={view.target}
             levels={round.levels}
             rails
+            numbers
             head={view.shapePath?.[0] ?? null}
             className="mx-auto max-h-[42dvh] max-w-full"
           />

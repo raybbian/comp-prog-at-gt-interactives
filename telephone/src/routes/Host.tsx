@@ -43,7 +43,7 @@ const PHASE_LABEL: Record<string, string> = {
   brief: 'Agree on a protocol',
   play: 'Send it',
   reveal: 'The answer',
-  done: 'That is the lot',
+  done: 'Finished',
 };
 
 export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostView> }) {
@@ -146,7 +146,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                     </span>
                   </div>
 
-                  {phase === 'reveal' && view.reveal !== null && round !== null ? (
+                  {phase === 'reveal' && view.reveal !== null && round !== null && (
                     <div className="w-[360px]">
                       <SnakeGrid
                         size={{ w: round.w, h: round.h }}
@@ -154,12 +154,6 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                         levels={round.levels}
                       />
                     </div>
-                  ) : (
-                    round !== null && (
-                      <p className="max-w-[980px] text-[3rem] leading-[1.15] tracking-[-0.02em] text-ink">
-                        {round.brief}
-                      </p>
-                    )
                   )}
 
                   {round !== null && (
