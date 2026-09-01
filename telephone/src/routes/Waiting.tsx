@@ -2,6 +2,7 @@ import { AppShell, MicroLabel, Rule } from '@cpatgt/shared';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
+import { roundById, sampleFor } from '../protocol/rounds.ts';
 import type { PlayerView, Role } from '../protocol/types.ts';
 import type { Meeting } from '../state/useMeeting.ts';
 
@@ -25,6 +26,7 @@ export function Waiting({
 }) {
   const round = view.round;
   const phase = round?.phase ?? 'lobby';
+  const spec = round === null ? null : roundById(round.id);
   const partnerSeated =
     role === 'sender' ? view.team.receiver === 'held' : view.team.sender === 'held';
 
@@ -71,9 +73,33 @@ export function Waiting({
         {phase === 'brief' && round !== null && (
           <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-semibold tracking-[-0.02em] text-ink">
-              Round {round.index}
+              Agree on a protocol
             </h1>
-            <p className="text-sm text-ink-muted">{round.brief}</p>
+            <p className="text-sm text-ink-muted">
+              Round {round.index}. {round.brief}
+            </p>
+            {/*
+              Both halves of a team see this, and both see the same one — it is drawn from
+              a fixed seed rather than the meeting's, so it says nothing about the picture
+              about to be sent. Without it the sender is describing a shape the receiver has
+              never seen the like of, which is not a protocol, it is a guess.
+            */}
+            {spec !== null && (
+              <div className="flex flex-col gap-2">
+                <MicroLabel as="h2">An example, not this round&apos;s</MicroLabel>
+                <SnakeGrid
+                  size={spec.size}
+                  grid={sampleFor(spec).grid}
+                  levels={spec.levels}
+                  rails
+                  head={sampleFor(spec).path[0] ?? null}
+                  className="mx-auto max-w-[16rem]"
+                />
+                <p className="text-xs text-ink-faint">
+                  You are both looking at this. Work out how you would send it.
+                </p>
+              </div>
+            )}
             <Rule />
             <dl className="flex flex-col gap-2 text-sm">
               <Fact label="Grid" value={`${round.w} by ${round.h}`} />
@@ -87,8 +113,7 @@ export function Waiting({
             </dl>
             <Rule />
             <p className="text-xs text-ink-faint">
-              Agree how you will write it down. Messages are digits only, eight at most, and
-              every message counts.
+              Messages are digits only, eight at most, and every message counts.
             </p>
           </div>
         )}

@@ -150,6 +150,16 @@ export const ROUNDS: readonly RoundSpec[] = [
   },
 ];
 
+/**
+ * The seed every *example* snake is drawn from.
+ *
+ * Fixed, and deliberately not the meeting's seed: an example has to be the same picture
+ * for both halves of a team and for the projector, while telling nobody anything about the
+ * round they are about to play. Because it is the same constant everywhere, the snake a
+ * pair plans against during protocol time is the one they were shown at the briefing.
+ */
+export const SAMPLE_SEED = 'briefing';
+
 export function roundById(id: string): RoundSpec | null {
   return ROUNDS.find((r) => r.id === id) ?? null;
 }
@@ -165,6 +175,11 @@ export type Puzzle = {
  * leaderboard compares like with like, and a round can be regenerated afterwards from
  * `(spec.id, seed)` alone.
  */
+/** The example for a round: same for both players, and never the picture they are sent. */
+export function sampleFor(spec: RoundSpec): Puzzle {
+  return buildPuzzle(spec, SAMPLE_SEED);
+}
+
 export function buildPuzzle(spec: RoundSpec, seed: string): Puzzle {
   const rng = rngFrom(seed, spec.id);
   const path =

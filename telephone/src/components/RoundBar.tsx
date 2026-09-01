@@ -29,7 +29,7 @@ export function RoundBar({
     round === null
       ? 'Waiting'
       : round.phase === 'brief'
-        ? 'Agree a protocol'
+        ? 'Agree on a protocol'
         : round.phase === 'play'
           ? `Round ${round.index}`
           : round.phase === 'reveal'

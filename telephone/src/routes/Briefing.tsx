@@ -1,7 +1,7 @@
 import { MicroLabel, useFitScale } from '@cpatgt/shared';
 import logoUrl from '@cpatgt/shared/assets/logo.png';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
-import { MAX_DIGITS, ROUNDS, buildPuzzle } from '../protocol/rounds.ts';
+import { MAX_DIGITS, ROUNDS, sampleFor } from '../protocol/rounds.ts';
 
 /**
  * What is on the projector while teams are joining.
@@ -23,7 +23,6 @@ import { MAX_DIGITS, ROUNDS, buildPuzzle } from '../protocol/rounds.ts';
 
 const W = 1920;
 const H = 1080;
-const SAMPLE_SEED = 'briefing';
 const SAMPLE = 148;
 
 export function Briefing({ joinUrl }: { joinUrl: string }) {
@@ -96,7 +95,7 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
                 <MicroLabel size="lg">The six rounds</MicroLabel>
                 <div className="flex gap-5">
                   {ROUNDS.map((spec) => {
-                    const { grid } = buildPuzzle(spec, SAMPLE_SEED);
+                    const { grid } = sampleFor(spec);
                     return (
                       <figure key={spec.id} className="flex flex-col gap-2">
                         <div style={{ width: SAMPLE }}>

@@ -40,7 +40,7 @@ const GLYPH: Record<HostTeamRow['activity'], string> = {
 };
 
 const PHASE_LABEL: Record<string, string> = {
-  brief: 'Agree how you will write it down',
+  brief: 'Agree on a protocol',
   play: 'Send it',
   reveal: 'The answer',
   done: 'That is the lot',

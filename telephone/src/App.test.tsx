@@ -2,7 +2,9 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { Briefing } from './routes/Briefing.tsx';
-import { ROUNDS } from './protocol/rounds.ts';
+import { Waiting } from './routes/Waiting.tsx';
+import { ROUNDS, buildPuzzle, sampleFor } from './protocol/rounds.ts';
+import type { PlayerView, Role } from './protocol/types.ts';
 
 /**
  * A server render is not a substitute for playing the thing, but it exercises the whole
@@ -50,6 +52,84 @@ describe('App', () => {
       'Huffman',
     ]) {
       expect(html.toLowerCase(), word).not.toContain(word.toLowerCase());
+    }
+  });
+});
+
+/**
+ * Protocol time is the only moment both halves of a team are looking at the same picture,
+ * and the whole point of the phase is that they agree how to describe one. A sender
+ * describing a shape the receiver has never seen the like of is not agreeing a protocol.
+ */
+describe('protocol time', () => {
+  const spec = ROUNDS[2];
+  if (spec === undefined) throw new Error('missing round');
+
+  const viewFor = (role: Role): PlayerView =>
+    ({
+      kind: role,
+      v: 1,
+      serverTime: 0,
+      team: { id: 't', name: 'SEGFAULT', code: '4821', sender: 'held', receiver: 'held' },
+      round: {
+        id: spec.id,
+        index: spec.index,
+        total: ROUNDS.length,
+        w: spec.size.w,
+        h: spec.size.h,
+        levels: spec.levels,
+        shapeGiven: spec.shapeGiven,
+        lossy: spec.dropRate > 0,
+        counts: spec.counts,
+        brief: spec.brief,
+        phase: 'brief',
+        phaseEndsAt: null,
+        snakeLength: 0,
+      },
+      shapePath: null,
+      sent: [],
+      received: [],
+      messagesUsed: 0,
+      solved: false,
+      reveal: null,
+      standing: null,
+      ...(role === 'sender' ? { target: '' } : { grid: '', gridRev: 0, submittedAt: null }),
+    }) as PlayerView;
+
+  const render = (role: Role): string =>
+    renderToString(
+      <Waiting view={viewFor(role)} meeting={{ health: 'live' }} role={role} msLeft={60_000} />,
+    );
+
+  it('shows both players an example, and calls the phase what it is', () => {
+    for (const role of ['sender', 'receiver'] as const) {
+      const html = render(role);
+      expect(html).toContain('Agree on a protocol');
+      // The rails are what make an example worth showing: you cannot agree on "row three"
+      // without both of you being able to see which row is three.
+      expect(html).toContain('An example');
+    }
+  });
+
+  // `SnakeGrid` draws a div per cell rather than emitting the grid string, so this
+  // compares the rendered picture itself between the two roles.
+  it('draws the same example for both halves of the team', () => {
+    const example = (html: string): string =>
+      html.slice(html.indexOf('An example'), html.indexOf('You are both looking at this'));
+
+    const sender = example(render('sender'));
+    expect(sender.length).toBeGreaterThan(0);
+    expect(sender).toBe(example(render('receiver')));
+    // The rails are the point: you cannot agree on "row three" if neither of you can see
+    // which row is three.
+    expect(sender).toContain('grid-template-columns:repeat(8');
+  });
+
+  // If the example ever came from the meeting's seed it would be the answer, handed to the
+  // receiver, before the round had started.
+  it('is never the picture the round is actually played on', () => {
+    for (const seed of ['meeting-a', 'meeting-b', 'deadbeef']) {
+      expect(sampleFor(spec).grid).not.toBe(buildPuzzle(spec, seed).grid);
     }
   });
 });
