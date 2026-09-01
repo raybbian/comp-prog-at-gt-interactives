@@ -56,13 +56,11 @@ export type Reveal = {
   readonly target: string;
   readonly differences: readonly number[];
   /**
-   * Fewest messages any team solved it in.
-   *
-   * Null when nobody managed it — and also on a round whose channel drops messages, where
-   * every team loses a different set of them and the counts are simply not the same
-   * measurement. Publishing a winner there would be inventing one.
+   * How few messages this picture could have taken — the information in it, not a record
+   * anyone set. Which team did best is the leaderboard's job; this is the number that says
+   * what was on the table.
    */
-  readonly best: number | null;
+  readonly floor: number;
 };
 
 export type StandingRow = {

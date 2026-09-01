@@ -262,15 +262,20 @@ checks every round's generator against it over sixty seeds.
 | 4 | 8x8   | one colour, 24 cells, turning constantly | the walk stops paying — send the board |
 | 5 | 8x8   | colour blocks and turns, one message in five lost | say it twice, or number them and ask |
 
-**Nothing on screen states a target.** The right-hand column is for whoever is running the
-evening; a number printed mid-round tells a team when to stop thinking, and the point is
-that there is always something better than what you have.
+**Nothing on screen states a target while the clock runs.** A number printed mid-round
+tells a team when to stop thinking, and the point is that there is always something better
+than what you have.
 
-What the results screen does show is **the fewest messages any team in the room solved it
-in** — a real number, achieved by people in the room, which is the one that stings. It is
-absent on round 5 for the same reason its message count cannot cost a team a place: every
-team lost a different set of messages there, so the counts are not the same measurement and
-a "best" would only name whoever got lucky.
+The results screen shows what the team sent beside **the theoretical best** — the
+information in that particular snake, divided by what eight digits can hold. It is
+deliberately not "the best any team managed": which team won is the leaderboard's job, and
+being beaten by nine messages teaches a pair much less than learning the picture was only
+ever worth two. `messageFloor` in `protocol/rounds.ts` computes it from the round's own
+generator — the choices the shape could have made and the structure inside the colours —
+and divides by `1 - dropRate`, so round 5's floor already allows for the messages its
+channel eats. It is an entropy estimate rather than a proof: a real encoder that squeezes
+the self-avoidance out of a path can beat it slightly, which is the right direction for a
+number teams are invited to chase.
 
 **The first two rounds teach the two halves of the vocabulary, one at a time.** Round 0 is
 a straight line, so there is no shape to describe and the colours are the whole message —

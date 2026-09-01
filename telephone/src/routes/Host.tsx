@@ -167,10 +167,10 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                       />
                       <Figure label="Solved" value={`${view.solvedCount}/${view.teamCount}`} />
                       <Figure label="Messages" value={String(view.messagesThisRound)} />
-                      {/* Only at the reveal, and only where message counts compare: the
-                          lossy round has every team losing a different set of them. */}
-                      {phase === 'reveal' && view.reveal !== null && view.reveal.best !== null && (
-                        <Figure label="Best" value={String(view.reveal.best)} />
+                      {/* Only at the reveal: a floor on screen mid-round would tell the
+                          room when to stop thinking. */}
+                      {phase === 'reveal' && view.reveal !== null && (
+                        <Figure label="Possible in" value={String(view.reveal.floor)} />
                       )}
                     </dl>
                   )}

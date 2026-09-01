@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUNDS } from '../src/protocol/rounds.ts';
+import { ROUNDS, buildPuzzle, messageFloor } from '../src/protocol/rounds.ts';
 import {
   advance,
   closeRound,
@@ -274,52 +274,52 @@ describe('seats', () => {
   });
 });
 
-describe('the best in the room', () => {
+describe('the theoretical best', () => {
   const revealOf = (state: State, team: Parameters<typeof buildReceiverView>[1]) => {
     advance(state.meta, NOW); // -> reveal
     return buildReceiverView(state, team, NOW).reveal;
   };
 
-  it('is the fewest messages anyone solved it in', () => {
-    const state = meeting();
-    const tight = seated(state, 'TIGHT');
-    const loose = seated(state, 'LOOSE');
-    playRound(state, 1);
-    const spec = ROUNDS[1];
-    if (spec === undefined) throw new Error('missing round');
-    const target = targetFor(state.meta, spec);
-
-    sendMessage(state, tight.team, 'sender', '11', 'a', NOW);
-    paint(state, tight.team, 'receiver', target, NOW);
-    submit(state, tight.team, 'receiver', NOW);
-
-    for (let i = 0; i < 9; i += 1) {
-      sendMessage(state, loose.team, 'sender', '22', `b${i}`, NOW + i);
+  it('is a whole number of messages on every round, whatever the seed', () => {
+    for (const spec of ROUNDS) {
+      for (const seed of ['a', 'b', 'c', 'd']) {
+        const floor = messageFloor(spec, buildPuzzle(spec, seed));
+        expect(Number.isInteger(floor), `${spec.id} ${seed}`).toBe(true);
+        expect(floor, `${spec.id} ${seed}`).toBeGreaterThanOrEqual(1);
+        // If the floor ever reached what a naive encoding costs, the round would have
+        // nothing to teach — a cell at a time is the thing it has to beat.
+        expect(floor, `${spec.id} ${seed}`).toBeLessThan(spec.size.w * spec.size.h);
+      }
     }
-    paint(state, loose.team, 'receiver', target, NOW);
-    submit(state, loose.team, 'receiver', NOW);
-
-    expect(revealOf(state, loose.team)?.best).toBe(1);
   });
 
-  /**
-   * Every team loses a different set of messages on the lossy round, so the counts are not
-   * the same measurement. A winner there would be an artefact of who got unlucky.
-   */
-  it('is not published on the round whose messages do not compare', () => {
-    const lossy = ROUNDS.find((r) => r.additiveOnly);
-    if (lossy === undefined) throw new Error('no additive-only round');
+  it('costs nothing for a shape the receiver was already given', () => {
+    const given = ROUNDS.find((r) => r.shapeGiven);
+    const drawn = ROUNDS.find((r) => !r.shapeGiven && r.levels > 1);
+    if (given === undefined || drawn === undefined) throw new Error('missing rounds');
+    // Same information in the colours either way; the one that must also describe the
+    // snake cannot be cheaper.
+    expect(messageFloor(given, buildPuzzle(given, 'a'))).toBeLessThanOrEqual(
+      messageFloor(drawn, buildPuzzle(drawn, 'a')) + given.size.w,
+    );
+  });
+
+  /** Five messages have to be sent for every four that land, and the floor says so. */
+  it('allows for the messages the lossy round eats', () => {
+    const lossy = ROUNDS.find((r) => r.dropRate > 0);
+    if (lossy === undefined) throw new Error('no lossy round');
+    const clean = { ...lossy, dropRate: 0 };
+    expect(messageFloor(lossy, buildPuzzle(lossy, 'a'))).toBeGreaterThan(
+      messageFloor(clean, buildPuzzle(clean, 'a')) - 1,
+    );
+  });
+
+  it('reaches the player on the reveal, and not before', () => {
     const state = meeting();
     const { team } = seated(state);
-    playRound(state, lossy.index);
-
-    for (let i = 0; i < 6; i += 1) sendMessage(state, team, 'sender', '7', `m${i}`, NOW + i);
-    paint(state, team, 'receiver', targetFor(state.meta, lossy), NOW);
-    submit(state, team, 'receiver', NOW);
-
-    const reveal = revealOf(state, team);
-    expect(reveal).not.toBeNull();
-    expect(reveal?.best).toBeNull();
+    playRound(state, 1);
+    expect(buildReceiverView(state, team, NOW).reveal).toBeNull();
+    expect(revealOf(state, team)?.floor).toBeGreaterThanOrEqual(1);
   });
 });
 

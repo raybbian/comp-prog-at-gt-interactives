@@ -137,24 +137,19 @@ export function Waiting({
               className="mx-auto max-w-xs"
             />
             {/*
-              The number a pair actually measure themselves against, and the only place it
-              appears — during the round it would tell them when to stop thinking.
+              The floor appears here and nowhere else. On screen mid-round it would tell a
+              pair when to stop thinking; afterwards it is how they find out the picture
+              was only ever worth two messages.
             */}
             <dl className="flex flex-col gap-2 text-sm">
               <Fact
                 label="You sent"
                 value={`${view.messagesUsed} message${view.messagesUsed === 1 ? '' : 's'}`}
               />
-              {spec !== null && !spec.additiveOnly && (
-                <Fact
-                  label="Best in the room"
-                  value={
-                    view.reveal.best === null
-                      ? 'Nobody solved it'
-                      : `${view.reveal.best} message${view.reveal.best === 1 ? '' : 's'}`
-                  }
-                />
-              )}
+              <Fact
+                label="Theoretical best"
+                value={`${view.reveal.floor} message${view.reveal.floor === 1 ? '' : 's'}`}
+              />
             </dl>
             <Rule />
             <div className="flex flex-col gap-6">

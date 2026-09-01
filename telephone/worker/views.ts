@@ -9,7 +9,7 @@
  * result and asserts the answer is not in there, in case a future field smuggles it out.
  */
 
-import { ROUNDS, type RoundSpec } from '../src/protocol/rounds.ts';
+import { ROUNDS, type RoundSpec, messageFloor } from '../src/protocol/rounds.ts';
 import { differences, rank, tally } from '../src/protocol/score.ts';
 import type {
   HostTeamRow,
@@ -80,26 +80,6 @@ function publicRound(meta: Meta, spec: RoundSpec, snakeLength: number): PublicRo
   };
 }
 
-/**
- * Fewest messages any team solved this round in — the number the room is measured against.
- *
- * Not published on a round that drops messages. `additiveOnly` already marks the round
- * whose message count cannot cost a team a place, and for the same reason: every team lost
- * a different set of messages, so the counts are not comparable and a "best" would be an
- * artefact of who got unlucky.
- */
-function bestFor(state: State, spec: RoundSpec): number | null {
-  if (spec.additiveOnly) return null;
-  let best: number | null = null;
-  for (const team of Object.values(state.teams)) {
-    const round = team.play[spec.id];
-    if (round === undefined || !round.solved) continue;
-    const used = messageCount(round);
-    if (best === null || used < best) best = used;
-  }
-  return best;
-}
-
 function revealFor(
   state: State,
   spec: RoundSpec,
@@ -110,7 +90,7 @@ function revealFor(
   return {
     target,
     differences: round === null ? [] : differences(target, round.grid),
-    best: bestFor(state, spec),
+    floor: messageFloor(spec, puzzleFor(state.meta, spec)),
   };
 }
 
