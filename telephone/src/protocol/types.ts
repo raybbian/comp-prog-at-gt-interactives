@@ -49,12 +49,16 @@ export type PublicRound = {
   readonly phase: Phase;
   readonly phaseEndsAt: number | null;
   readonly snakeLength: number;
+  /** What a good encoding costs. Only ever shown once the round is over. */
+  readonly par: number;
 };
 
 /** Only ever present once the round is over. */
 export type Reveal = {
   readonly target: string;
   readonly differences: readonly number[];
+  /** Fewest messages any team solved it in, or null if nobody did. */
+  readonly best: number | null;
 };
 
 export type StandingRow = {

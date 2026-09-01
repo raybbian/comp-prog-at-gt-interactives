@@ -214,6 +214,25 @@ export function generateVaried(rng: Rng, length: number, levels: number): number
 }
 
 /**
+ * Every step exactly one level, up or down, and never level.
+ *
+ * That makes the whole sequence a start value and a string of bits — up or down — which is
+ * the round: a pair who send a level per cell pay thirty numbers, and a pair who notice
+ * they are sending bits can pack twenty-nine of them into nine decimal digits.
+ */
+export function generateSteps(rng: Rng, length: number, levels: number): number[] {
+  const out: number[] = [1 + randInt(rng, levels)];
+  for (let n = 1; n < length; n += 1) {
+    const previous = out[n - 1] as number;
+    let step = randInt(rng, 2) === 0 ? -1 : 1;
+    if (previous + step < 1) step = 1;
+    if (previous + step > levels) step = -1;
+    out.push(previous + step);
+  }
+  return out;
+}
+
+/**
  * Long blocks of one colour, so run-length encoding is the thing that wins.
  *
  * The pair who send a colour per cell pay the length of the snake; the pair who notice the

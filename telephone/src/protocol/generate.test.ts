@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bodyCells } from './grid.ts';
-import { generateSplotches, generateVaried } from './generate.ts';
+import { generateSplotches, generateSteps, generateVaried } from './generate.ts';
 import { isInducedPath, orderPath } from './paths.ts';
 import { RAMP_LEVELS, ROUNDS, buildPuzzle } from './rounds.ts';
 import { rngFrom } from './rng.ts';
@@ -125,9 +125,26 @@ describe('the colours', () => {
     }
   });
 
+  /**
+   * The binary round only works if the sequence really is a string of bits. One repeated
+   * level and "up or down" stops describing it, and the encoding the round exists to teach
+   * silently becomes wrong rather than merely expensive.
+   */
+  it('steps exactly one level at a time, never nought', () => {
+    for (const seed of SEEDS) {
+      const levels = generateSteps(rngFrom(seed), 200, RAMP_LEVELS);
+      for (let i = 1; i < levels.length; i += 1) {
+        const current = levels[i] as number;
+        expect(Math.abs(current - (levels[i - 1] as number)), seed).toBe(1);
+        expect(current).toBeGreaterThanOrEqual(1);
+        expect(current).toBeLessThanOrEqual(RAMP_LEVELS);
+      }
+    }
+  });
+
   it('gives the shape-given round few enough runs to be worth counting', () => {
-    const spec = ROUNDS.find((r) => r.shapeGiven);
-    if (spec === undefined) throw new Error('missing shape-given round');
+    const spec = ROUNDS.find((r) => r.colouring.kind === 'splotches' && r.shapeGiven);
+    if (spec === undefined) throw new Error('missing shape-given splotch round');
     for (const seed of SEEDS.slice(0, 20)) {
       const { levels } = buildPuzzle(spec, seed);
       // Sending a colour per cell costs `levels.length`; counting the blocks costs two

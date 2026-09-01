@@ -103,6 +103,9 @@ export function Waiting({
               <Fact label="Grid" value={`${round.w} by ${round.h}`} />
               <Fact label="Snake" value={`${round.snakeLength} cells`} />
               {spec !== null && <Fact label="Shape" value={shapeOf(spec)} />}
+            {round.shapeGiven && (
+                <Fact label="You draw" value="Nothing — the colours only" />
+              )}
               <Fact
                 label="Colours"
                 value={round.levels > 1 ? `${round.levels} levels` : 'Black and white'}
@@ -133,10 +136,26 @@ export function Waiting({
               wrong={view.solved ? undefined : view.reveal.differences}
               className="mx-auto max-w-xs"
             />
-            <p className="text-sm text-ink-muted">
-              {view.messagesUsed} message{view.messagesUsed === 1 ? '' : 's'}
-              {view.standing !== null && ` · ${view.standing.solved} solved so far`}
-            </p>
+            {/*
+              Par is on screen here and nowhere else. During the round it would tell a team
+              when to stop thinking; afterwards it is the only way they learn there was
+              something better than what they did.
+            */}
+            <dl className="flex flex-col gap-2 text-sm">
+              <Fact
+                label="You sent"
+                value={`${view.messagesUsed} message${view.messagesUsed === 1 ? '' : 's'}`}
+              />
+              <Fact
+                label="Best in the room"
+                value={
+                  view.reveal.best === null
+                    ? 'Nobody solved it'
+                    : `${view.reveal.best} message${view.reveal.best === 1 ? '' : 's'}`
+                }
+              />
+              <Fact label="A good encoding" value={`${round.par} messages`} />
+            </dl>
             <Rule />
             <div className="flex flex-col gap-6">
               <MessageLog

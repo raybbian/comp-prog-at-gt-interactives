@@ -1,4 +1,5 @@
-import { cn } from '@cpatgt/shared';
+import { MicroLabel, cn } from '@cpatgt/shared';
+import type { Role } from '../protocol/types.ts';
 
 /**
  * The two things a team must not miss.
@@ -12,6 +13,27 @@ import { cn } from '@cpatgt/shared';
  * player still has something to do. A result is not a pending action, so `done` is inked
  * instead — which also keeps the accent meaning exactly one thing.
  */
+/**
+ * A round where the snake is already drawn is a different game, and one a pair can waste
+ * the whole clock on if they do not notice — the sender describing a shape the receiver
+ * cannot change, the receiver hunting for a way to draw. The brief says so; this says so
+ * again while the clock is running, which is when it matters.
+ */
+export function FixedShapeNote({ role }: { role: Role }) {
+  return (
+    <div className="flex flex-col gap-1 border border-hairline-strong bg-ground-raised p-3">
+      <MicroLabel as="h2" className="text-ink">
+        The shape is already given
+      </MicroLabel>
+      <p className="text-sm text-ink-muted">
+        {role === 'sender'
+          ? 'Your partner can see the snake. Only its colours are missing, so send those.'
+          : 'The snake is drawn and cannot be moved. You are setting its colours only.'}
+      </p>
+    </div>
+  );
+}
+
 /** Whichever of the two states is live, in the one place both play screens show it. */
 export function PlayBanner({ solved, msLeft }: { solved: boolean; msLeft: number }) {
   if (solved) {

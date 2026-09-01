@@ -14,12 +14,13 @@ import { type Grid, type Size, paint } from './grid.ts';
 import {
   generateInduced,
   generateSplotches,
+  generateSteps,
   generateVaried,
   generateRectilinear,
   generateStraight,
 } from './generate.ts';
 import type { CellIndex } from './grid.ts';
-import { rngFrom } from './rng.ts';
+import { type Rng, rngFrom } from './rng.ts';
 
 /** Digits 0-9, and the cap that makes the whole thing a puzzle. */
 export const MAX_DIGITS = 8;
@@ -47,7 +48,8 @@ export type Shape =
  */
 export type Colouring =
   | { readonly kind: 'varied' }
-  | { readonly kind: 'splotches'; readonly minRun: number; readonly maxRun: number };
+  | { readonly kind: 'splotches'; readonly minRun: number; readonly maxRun: number }
+  | { readonly kind: 'steps' };
 
 export type RoundSpec = {
   readonly id: string;
@@ -61,6 +63,12 @@ export type RoundSpec = {
   readonly shapeGiven: boolean;
   /** Fraction of messages the channel silently swallows. */
   readonly dropRate: number;
+  /**
+   * What a good encoding costs, in messages. Shown at the reveal and never before it —
+   * a number on screen while the clock runs tells a team when to stop thinking, and the
+   * same number afterwards tells them there was more to find.
+   */
+  readonly par: number;
   /** Protocol time before the clock starts, and the round itself. */
   readonly briefMs: number;
   readonly playMs: number;
@@ -90,6 +98,7 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'varied' },
     shapeGiven: false,
     dropRate: 0,
+    par: 2,
     briefMs: MINUTE,
     playMs: 2 * MINUTE,
     counts: false,
@@ -106,6 +115,7 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'varied' },
     shapeGiven: false,
     dropRate: 0,
+    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 4 * MINUTE,
     counts: true,
@@ -116,12 +126,13 @@ export const ROUNDS: readonly RoundSpec[] = [
     index: 2,
     size: { w: 10, h: 10 },
     // The shape is a gift, so the colours are the entire puzzle — and they arrive in long
-    // blocks. A colour per cell costs thirty; counting the blocks costs about six.
+    // blocks. A colour per cell costs thirty; counting the blocks costs about twelve.
     shape: { kind: 'induced', length: 30 },
     levels: RAMP_LEVELS,
     colouring: { kind: 'splotches', minRun: 3, maxRun: 8 },
     shapeGiven: true,
     dropRate: 0,
+    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
@@ -130,15 +141,16 @@ export const ROUNDS: readonly RoundSpec[] = [
   {
     id: 'r3',
     index: 3,
-    size: { w: 8, h: 8 },
-    // Turns everywhere, so describing the walk stops paying and the board itself becomes
-    // the cheaper thing to send. Sixty-four cells is not an accident: eight messages of
-    // eight binary digits is the whole grid, exactly.
-    shape: { kind: 'induced', length: 24 },
-    levels: 1,
-    colouring: { kind: 'varied' },
-    shapeGiven: false,
+    size: { w: 10, h: 10 },
+    // The same gift, and the blocks are gone: every step is exactly one level, up or
+    // down. So the message is a start value and twenty-nine bits, and the team that sees
+    // that packs them into nine digits instead of sending thirty numbers.
+    shape: { kind: 'induced', length: 30 },
+    levels: RAMP_LEVELS,
+    colouring: { kind: 'steps' },
+    shapeGiven: true,
     dropRate: 0,
+    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
@@ -148,6 +160,25 @@ export const ROUNDS: readonly RoundSpec[] = [
     id: 'r4',
     index: 4,
     size: { w: 8, h: 8 },
+    // Turns everywhere, so describing the walk stops paying and the board itself becomes
+    // the cheaper thing to send. Sixty-four cells is not an accident: eight messages of
+    // eight binary digits is the whole grid, exactly — and a team that packed bits last
+    // round already knows how to do it in three.
+    shape: { kind: 'induced', length: 24 },
+    levels: 1,
+    colouring: { kind: 'varied' },
+    shapeGiven: false,
+    dropRate: 0,
+    par: 3,
+    briefMs: 2 * MINUTE,
+    playMs: 5 * MINUTE,
+    counts: true,
+    additiveOnly: false,
+  },
+  {
+    id: 'r5',
+    index: 5,
+    size: { w: 8, h: 8 },
     // Everything at once, over a channel that eats one message in five and never says
     // which. Shape and colour both, so there is something worth protecting.
     shape: { kind: 'induced', length: 16 },
@@ -155,11 +186,13 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'splotches', minRun: 2, maxRun: 6 },
     shapeGiven: false,
     dropRate: 0.2,
+    par: 6,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
     additiveOnly: true,
   },
+
 ];
 
 /**
@@ -174,6 +207,20 @@ export const SAMPLE_SEED = 'briefing';
 
 export function roundById(id: string): RoundSpec | null {
   return ROUNDS.find((r) => r.id === id) ?? null;
+}
+
+function colourAlong(rng: Rng, length: number, spec: RoundSpec): number[] {
+  if (spec.colouring.kind === 'splotches') {
+    return generateSplotches(
+      rng,
+      length,
+      spec.levels,
+      spec.colouring.minRun,
+      spec.colouring.maxRun,
+    );
+  }
+  if (spec.colouring.kind === 'steps') return generateSteps(rng, length, spec.levels);
+  return generateVaried(rng, length, spec.levels);
 }
 
 export type Puzzle = {
@@ -208,17 +255,7 @@ export function buildPuzzle(spec: RoundSpec, seed: string): Puzzle {
           );
 
   const levels =
-    spec.levels > 1
-      ? spec.colouring.kind === 'splotches'
-        ? generateSplotches(
-            rng,
-            path.length,
-            spec.levels,
-            spec.colouring.minRun,
-            spec.colouring.maxRun,
-          )
-        : generateVaried(rng, path.length, spec.levels)
-      : new Array<number>(path.length).fill(1);
+    spec.levels > 1 ? colourAlong(rng, path.length, spec) : new Array<number>(path.length).fill(1);
 
   return { path, levels, grid: paint(spec.size, path, levels) };
 }

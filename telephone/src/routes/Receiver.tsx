@@ -2,7 +2,7 @@ import { ActionBar, AppShell, Button, MicroLabel, Rule, cn } from '@cpatgt/share
 import { useEffect, useRef, useState } from 'react';
 import { Composer } from '../components/Composer.tsx';
 import { Keypad } from '../components/Keypad.tsx';
-import { PlayBanner } from '../components/Banner.tsx';
+import { FixedShapeNote, PlayBanner } from '../components/Banner.tsx';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { PathStrip } from '../components/PathStrip.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
@@ -125,6 +125,7 @@ export function Receiver({
     >
       <div className="flex flex-col gap-4">
         <PlayBanner solved={view.solved} msLeft={msLeft} />
+        {round.shapeGiven && <FixedShapeNote role="receiver" />}
 
         {/* Pinned above both tabs: the message you are working from, and where you are in it. */}
         <div className="flex flex-col gap-2 border border-hairline-strong bg-ground-raised p-3">

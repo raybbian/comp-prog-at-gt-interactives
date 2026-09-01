@@ -85,6 +85,7 @@ describe('protocol time', () => {
         phase,
         phaseEndsAt: null,
         snakeLength: 0,
+        par: spec.par,
       },
       shapePath: null,
       sent: [],

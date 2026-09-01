@@ -253,18 +253,19 @@ checks every round's generator against it over sixty seeds.
 
 ### The rounds
 
-| # | Grid | Snake | Teaches | What the gap is about |
-| - | ---- | ----- | ------- | --------------------- |
-| 0 | 6x6   | a straight line, every cell a different colour | colour | nothing — warm-up, and off the record |
-| 1 | 8x8   | one colour, four straight runs, three turns | shape | say the turns, not the cells |
-| 2 | 10x10 | 30 cells in six colour blocks, shape given | both | count the blocks, do not list the cells |
-| 3 | 8x8   | one colour, 24 cells, turning constantly | both | the walk stops paying — send the board |
-| 4 | 8x8   | colour blocks and turns, one message in five lost | both | say it twice, or number them and ask |
+| # | Grid | Snake | Par | What the gap is about |
+| - | ---- | ----- | --- | --------------------- |
+| 0 | 6x6   | a straight line, every cell a different colour | 2 | nothing — warm-up, and off the record |
+| 1 | 8x8   | one colour, four straight runs, three turns | 2 | say the turns, not the cells |
+| 2 | 10x10 | 30 cells in six colour blocks, shape given | 2 | count the blocks, do not list the cells |
+| 3 | 10x10 | 30 cells, every step one level up or down, shape given | 2 | it is a string of bits — pack them |
+| 4 | 8x8   | one colour, 24 cells, turning constantly | 3 | the walk stops paying — send the board |
+| 5 | 8x8   | colour blocks and turns, one message in five lost | 6 | say it twice, or number them and ask |
 
-**Nothing on screen ever states those numbers.** The right-hand column is for whoever is
-running the evening; a target printed on the projector tells a team when to stop thinking,
-and the point is that there is always something better than what you have. Teams find out
-what was possible by watching the standings.
+**Par is on screen at the reveal and nowhere else.** During the round it would tell a team
+when to stop thinking; on the results screen afterwards it is the only way a pair who sent
+thirty numbers learn that two were enough. Beside it sits the fewest messages any team in
+the room solved it in, which is the number that actually stings.
 
 **The first two rounds teach the two halves of the vocabulary, one at a time.** Round 0 is
 a straight line, so there is no shape to describe and the colours are the whole message —
@@ -275,21 +276,27 @@ clever. Meeting either of those for the first time with a clock running and a pa
 waiting is the wrong moment, which is why they come first and why round 0 does not count.
 Round 0 is also the window in which stragglers are still joining.
 
-**The last three are each a different reason the obvious encoding is not the good one.**
-Round 2 hands over the shape, so the colours are the entire puzzle, and they arrive in long
-blocks: a colour per cell costs thirty numbers, counting the blocks costs about twelve.
-Round 3 takes the colour away again and turns constantly, so describing the walk stops
-paying and the board itself — sixty-four cells, which is exactly eight messages of eight
-binary digits — becomes the cheaper thing to send. That pair is the lesson that
-generalises: there is no universal answer, you have to look at the source.
+**The last four are each a different reason the obvious encoding is not the good one.**
+Rounds 2 and 3 both hand over the shape, so the colours are the entire puzzle, and they are
+the same thirty cells on the same board — what differs is the structure inside them. In
+round 2 the colours arrive in long blocks, so counting blocks beats listing cells. In round
+3 every step is exactly one level up or down, so the whole sequence is a start value and
+twenty-nine bits: a pair who see that write nine digits where the pair beside them wrote
+thirty numbers. Round 4 takes colour away entirely and turns constantly, so describing the
+walk stops paying and the board itself — sixty-four cells, exactly eight messages of eight
+binary digits — becomes the cheaper thing to send, by the packing trick they just learned.
+
+Those four are the lesson that generalises: the same picture, on the same grid, wants a
+different encoding depending on what is inside it. There is no universal answer, you have
+to look at the source.
 
 No board is wider than ten cells, which is the other thing round sizes are chosen for: at
 ten across, a cell is about 34 points on a phone, and every grid in the game stays
 comfortably tappable without anyone pinching to zoom.
 
-Round 4 is the only round with a lossy channel, and that placement is deliberate. A lost
+Round 5 is the only round with a lossy channel, and that placement is deliberate. A lost
 message in a *sequential* encoding desynchronises everything after it and the receiver
-cannot know, so dropping messages on rounds 2 or 3 would punish the cleverest teams
+cannot know, so dropping messages on rounds 2 through 4 would punish the cleverest teams
 hardest. It is also
 **additive only** — solving it can win a team a place, its message count cannot cost them
 one — because every team loses the same *number* of messages but not the same ones. Flip

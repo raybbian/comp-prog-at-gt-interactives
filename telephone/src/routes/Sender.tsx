@@ -2,7 +2,7 @@ import { AppShell, MicroLabel, Rule } from '@cpatgt/shared';
 import { useState } from 'react';
 import { Composer } from '../components/Composer.tsx';
 import { Keypad } from '../components/Keypad.tsx';
-import { PlayBanner } from '../components/Banner.tsx';
+import { FixedShapeNote, PlayBanner } from '../components/Banner.tsx';
 import { MessageLog } from '../components/MessageLog.tsx';
 import { RoundBar } from '../components/RoundBar.tsx';
 import { SnakeGrid } from '../components/SnakeGrid.tsx';
@@ -69,6 +69,7 @@ export function Sender({
     >
       <div className="flex flex-col gap-4 pb-64">
         <PlayBanner solved={view.solved} msLeft={msLeft} />
+        {round.shapeGiven && <FixedShapeNote role="sender" />}
 
         <div className="flex items-baseline justify-between">
           <MicroLabel as="h1">Send this</MicroLabel>

@@ -77,15 +77,33 @@ function publicRound(meta: Meta, spec: RoundSpec, snakeLength: number): PublicRo
     phase: meta.phase,
     phaseEndsAt: meta.phaseEndsAt,
     snakeLength,
+    par: spec.par,
   };
 }
 
-function revealFor(meta: Meta, spec: RoundSpec, round: TeamRound | null): Reveal | null {
-  if (meta.phase !== 'reveal') return null;
-  const target = targetFor(meta, spec);
+/** Fewest messages any team solved this round in — the number the room is measured against. */
+function bestFor(state: State, spec: RoundSpec): number | null {
+  let best: number | null = null;
+  for (const team of Object.values(state.teams)) {
+    const round = team.play[spec.id];
+    if (round === undefined || !round.solved) continue;
+    const used = messageCount(round);
+    if (best === null || used < best) best = used;
+  }
+  return best;
+}
+
+function revealFor(
+  state: State,
+  spec: RoundSpec,
+  round: TeamRound | null,
+): Reveal | null {
+  if (state.meta.phase !== 'reveal') return null;
+  const target = targetFor(state.meta, spec);
   return {
     target,
     differences: round === null ? [] : differences(target, round.grid),
+    best: bestFor(state, spec),
   };
 }
 
@@ -148,7 +166,7 @@ function common(state: State, team: Team, role: Role, now: number): Common {
     received: round === null ? [] : publish(inbox(round, role)),
     messagesUsed: round === null ? 0 : messageCount(round),
     solved: round?.solved ?? false,
-    reveal: spec === null ? null : revealFor(state.meta, spec, round),
+    reveal: spec === null ? null : revealFor(state, spec, round),
     standing: standingsOf(state).find((s) => s.teamId === team.id) ?? null,
   };
 }
@@ -218,7 +236,7 @@ export function buildHostView(state: State, joinUrl: string, now: number): HostV
         : publicRound(state.meta, spec, puzzleFor(state.meta, spec).path.length),
     // The host has the answer up on the projector during the reveal, so this is the one
     // view where the target is meant to be visible.
-    reveal: spec === null ? null : revealFor(state.meta, spec, null),
+    reveal: spec === null ? null : revealFor(state, spec, null),
     teams: rows,
     standings: standingsOf(state),
     solvedCount: rows.filter((r) => r.solvedThisRound).length,
