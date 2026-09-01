@@ -218,13 +218,13 @@ export class Meeting implements DurableObject {
     // Only the worker can reach this, and only once: the reply is what tells it whether
     // the code it picked was free.
     if (path === '/__open') {
-      // Not a `problem()`: this is a handshake with the worker, which only reads the
-      // status, and an internal-only failure has no business in the client's `ErrorCode`.
-      if (this.#open) return json({ ok: false }, 409);
+      // Not a `problem()`: an internal-only failure has no business in the client's
+      // `ErrorCode`, and the worker reads nothing here but the status.
+      if (this.#open) return json({}, 409);
       this.#open = true;
       this.#state.meta = freshMeta(str(body, 'room'), newSeed());
       await this.#save();
-      return json({ ok: true, room: this.#state.meta.room });
+      return json({ room: this.#state.meta.room });
     }
 
     if (!this.#open) return problem('no_room', 'No meeting with that code.');
@@ -243,9 +243,7 @@ export class Meeting implements DurableObject {
         teamCount: Object.keys(this.#state.teams).length,
         joinOpen: this.#state.meta.phase !== 'done',
       };
-      // Enveloped like every other reply: the client reads `ok` to tell success from
-      // failure, and a bare body is indistinguishable from one.
-      return json({ ok: true, ...lobby });
+      return json(lobby);
     }
 
     if (path === '/teams' && request.method === 'POST') {
@@ -254,7 +252,7 @@ export class Meeting implements DurableObject {
       this.#touch();
       await this.#save(made.value);
       this.#broadcast();
-      return json({ ok: true, teamId: made.value.id, name: made.value.name, code: made.value.code });
+      return json({ teamId: made.value.id, name: made.value.name, code: made.value.code });
     }
 
     if (path === '/join' && request.method === 'POST') {
@@ -276,7 +274,7 @@ export class Meeting implements DurableObject {
           ? buildSenderView(this.#state, joined.value.team, now)
           : buildReceiverView(this.#state, joined.value.team, now);
       return json(
-        { ok: true, sessionId: joined.value.sessionId, role, view },
+        { sessionId: joined.value.sessionId, role, view },
         200,
         {
           'set-cookie': setCookie(
@@ -300,7 +298,7 @@ export class Meeting implements DurableObject {
      * a live team's join code, and that is `buildHostView`'s job, not a gate's.
      */
     if (path.startsWith('/host/')) {
-      if (path === '/host/view') return json({ ok: true, view: buildHostView(this.#state, url.origin, now) });
+      if (path === '/host/view') return json({ view: buildHostView(this.#state, url.origin, now) });
       if (path === '/host/events') return this.#stream(request, null, true);
 
       if (path === '/host/control' && request.method === 'POST') {
@@ -316,7 +314,7 @@ export class Meeting implements DurableObject {
         await this.#saveAll();
         await this.#rearm(now);
         this.#broadcast();
-        return json({ ok: true, view: buildHostView(this.#state, url.origin, now) });
+        return json({ view: buildHostView(this.#state, url.origin, now) });
       }
 
       if (path === '/host/reset' && request.method === 'POST') {
@@ -327,7 +325,7 @@ export class Meeting implements DurableObject {
         await this.ctx.storage.deleteAll();
         await this.#saveAll();
         this.#broadcast();
-        return json({ ok: true, view: buildHostView(this.#state, url.origin, now) });
+        return json({ view: buildHostView(this.#state, url.origin, now) });
       }
       return problem('bad_request', 'No such endpoint.');
     }
@@ -344,7 +342,7 @@ export class Meeting implements DurableObject {
         active.value.role === 'sender'
           ? buildSenderView(this.#state, active.value.team, now)
           : buildReceiverView(this.#state, active.value.team, now);
-      return json({ ok: true, sessionId: id, role: active.value.role, view }, 200, {
+      return json({ sessionId: id, role: active.value.role, view }, 200, {
         'set-cookie': setCookie(SESSION_COOKIE, id, SESSION_MAX_AGE, secure, base),
       });
     }
@@ -356,7 +354,7 @@ export class Meeting implements DurableObject {
         ? buildSenderView(this.#state, team, Date.now())
         : buildReceiverView(this.#state, team, Date.now());
 
-    if (path === '/view') return json({ ok: true, view: viewNow() });
+    if (path === '/view') return json({ view: viewNow() });
     if (path === '/events') return this.#stream(request, sessionId, false);
 
     if (path === '/messages' && request.method === 'POST') {
@@ -372,7 +370,7 @@ export class Meeting implements DurableObject {
       this.#touch();
       await this.#save(team);
       this.#broadcast();
-      return json({ ok: true, seq: sent.value.seq, view: viewNow() });
+      return json({ seq: sent.value.seq, view: viewNow() });
     }
 
     if (path === '/grid' && request.method === 'POST') {
@@ -381,7 +379,7 @@ export class Meeting implements DurableObject {
       this.#touch();
       await this.#save(team);
       this.#broadcast();
-      return json({ ok: true, rev: painted.value.rev, view: viewNow() });
+      return json({ rev: painted.value.rev, view: viewNow() });
     }
 
     if (path === '/submit' && request.method === 'POST') {
@@ -390,7 +388,7 @@ export class Meeting implements DurableObject {
       this.#touch();
       await this.#save(team);
       this.#broadcast();
-      return json({ ok: true, solved: done.value.solved, view: viewNow() });
+      return json({ solved: done.value.solved, view: viewNow() });
     }
 
     if (path === '/leave' && request.method === 'POST') {
@@ -398,7 +396,7 @@ export class Meeting implements DurableObject {
       this.#touch();
       await this.#save(team);
       this.#broadcast();
-      return json({ ok: true });
+      return json({});
     }
 
     return problem('bad_request', 'No such endpoint.');

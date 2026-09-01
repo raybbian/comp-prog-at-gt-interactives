@@ -37,8 +37,13 @@ const STATUS: Partial<Record<ErrorCode, number>> = {
   server_full: 503,
 };
 
+/**
+ * The status is the verdict and the body is the detail: which failure it was, and the
+ * wording to put in front of a player. A client that had to read the verdict out of the
+ * body could not tell a refusal from a 502 that never reached this code at all.
+ */
 export function problem(error: ErrorCode, message: string, extra: unknown = {}): Response {
-  return json({ ok: false, error, message, ...(extra as object) }, STATUS[error] ?? 400);
+  return json({ error, message, ...(extra as object) }, STATUS[error] ?? 400);
 }
 
 export function cookie(request: Request, name: string): string | null {

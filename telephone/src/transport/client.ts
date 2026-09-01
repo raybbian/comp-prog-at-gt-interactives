@@ -50,7 +50,13 @@ async function request<T>(path: string, init?: RequestInit, base = apiBase()): P
     });
     const body: unknown = await response.json().catch(() => ({}));
     const record = (body ?? {}) as Record<string, unknown>;
-    if (record['ok'] === true) return { ok: true, data: record as T };
+
+    // The status is the verdict; the body only ever says *which* failure and how to word
+    // it. Reading the verdict out of the body instead means a route that answers 200 with
+    // a shape nobody thought to envelope reads as failure, and — worse — a 502 from in
+    // front of the worker, or a runtime 500, arrives as HTML, parses to nothing, and gets
+    // reported as whatever the fallback happens to say.
+    if (response.ok) return { ok: true, data: record as T };
     return {
       ok: false,
       error: (record['error'] as ErrorCode | undefined) ?? 'bad_request',

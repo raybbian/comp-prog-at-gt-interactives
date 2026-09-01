@@ -25,9 +25,8 @@ export const ERROR_CODES = [
 
 export type ErrorCode = (typeof ERROR_CODES)[number];
 
+/** The shape an action returns when it refuses. Server-side only; the wire uses status. */
 export type Failure = { readonly ok: false; readonly error: ErrorCode; readonly message: string };
-export type Success<T> = { readonly ok: true } & T;
-export type Result<T> = Success<T> | Failure;
 
 export function fail(error: ErrorCode, message: string): Failure {
   return { ok: false, error, message };

@@ -50,7 +50,7 @@ async function mint(env: Env, origin: string): Promise<Response> {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ room: code }),
     });
-    if (opened.ok) return json({ ok: true, room: code });
+    if (opened.ok) return json({ room: code });
   }
   return problem('server_full', 'No room codes left.');
 }
