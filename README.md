@@ -253,19 +253,24 @@ checks every round's generator against it over sixty seeds.
 
 ### The rounds
 
-| # | Grid | Snake | Par | What the gap is about |
-| - | ---- | ----- | --- | --------------------- |
-| 0 | 6x6   | a straight line, every cell a different colour | 2 | nothing — warm-up, and off the record |
-| 1 | 8x8   | one colour, four straight runs, three turns | 2 | say the turns, not the cells |
-| 2 | 10x10 | 30 cells in six colour blocks, shape given | 2 | count the blocks, do not list the cells |
-| 3 | 10x10 | 30 cells, every step one level up or down, shape given | 2 | it is a string of bits — pack them |
-| 4 | 8x8   | one colour, 24 cells, turning constantly | 3 | the walk stops paying — send the board |
-| 5 | 8x8   | colour blocks and turns, one message in five lost | 6 | say it twice, or number them and ask |
+| # | Grid | Snake | What the gap is about |
+| - | ---- | ----- | --------------------- |
+| 0 | 6x6   | a straight line, every cell a different colour | nothing — warm-up, and off the record |
+| 1 | 8x8   | one colour, four straight runs, three turns | say the turns, not the cells |
+| 2 | 10x10 | 30 cells in six colour blocks, shape given | count the blocks, do not list the cells |
+| 3 | 10x10 | 30 cells, every step one level up or down, shape given | it is a string of bits — pack them |
+| 4 | 8x8   | one colour, 24 cells, turning constantly | the walk stops paying — send the board |
+| 5 | 8x8   | colour blocks and turns, one message in five lost | say it twice, or number them and ask |
 
-**Par is on screen at the reveal and nowhere else.** During the round it would tell a team
-when to stop thinking; on the results screen afterwards it is the only way a pair who sent
-thirty numbers learn that two were enough. Beside it sits the fewest messages any team in
-the room solved it in, which is the number that actually stings.
+**Nothing on screen states a target.** The right-hand column is for whoever is running the
+evening; a number printed mid-round tells a team when to stop thinking, and the point is
+that there is always something better than what you have.
+
+What the results screen does show is **the fewest messages any team in the room solved it
+in** — a real number, achieved by people in the room, which is the one that stings. It is
+absent on round 5 for the same reason its message count cannot cost a team a place: every
+team lost a different set of messages there, so the counts are not the same measurement and
+a "best" would only name whoever got lucky.
 
 **The first two rounds teach the two halves of the vocabulary, one at a time.** Round 0 is
 a straight line, so there is no shape to describe and the colours are the whole message —

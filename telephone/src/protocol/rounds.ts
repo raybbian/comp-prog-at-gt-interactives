@@ -63,12 +63,6 @@ export type RoundSpec = {
   readonly shapeGiven: boolean;
   /** Fraction of messages the channel silently swallows. */
   readonly dropRate: number;
-  /**
-   * What a good encoding costs, in messages. Shown at the reveal and never before it —
-   * a number on screen while the clock runs tells a team when to stop thinking, and the
-   * same number afterwards tells them there was more to find.
-   */
-  readonly par: number;
   /** Protocol time before the clock starts, and the round itself. */
   readonly briefMs: number;
   readonly playMs: number;
@@ -98,7 +92,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'varied' },
     shapeGiven: false,
     dropRate: 0,
-    par: 2,
     briefMs: MINUTE,
     playMs: 2 * MINUTE,
     counts: false,
@@ -115,7 +108,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'varied' },
     shapeGiven: false,
     dropRate: 0,
-    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 4 * MINUTE,
     counts: true,
@@ -132,7 +124,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'splotches', minRun: 3, maxRun: 8 },
     shapeGiven: true,
     dropRate: 0,
-    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
@@ -150,7 +141,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'steps' },
     shapeGiven: true,
     dropRate: 0,
-    par: 2,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
@@ -169,7 +159,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'varied' },
     shapeGiven: false,
     dropRate: 0,
-    par: 3,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,
@@ -186,7 +175,6 @@ export const ROUNDS: readonly RoundSpec[] = [
     colouring: { kind: 'splotches', minRun: 2, maxRun: 6 },
     shapeGiven: false,
     dropRate: 0.2,
-    par: 6,
     briefMs: 2 * MINUTE,
     playMs: 5 * MINUTE,
     counts: true,

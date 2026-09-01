@@ -137,24 +137,24 @@ export function Waiting({
               className="mx-auto max-w-xs"
             />
             {/*
-              Par is on screen here and nowhere else. During the round it would tell a team
-              when to stop thinking; afterwards it is the only way they learn there was
-              something better than what they did.
+              The number a pair actually measure themselves against, and the only place it
+              appears — during the round it would tell them when to stop thinking.
             */}
             <dl className="flex flex-col gap-2 text-sm">
               <Fact
                 label="You sent"
                 value={`${view.messagesUsed} message${view.messagesUsed === 1 ? '' : 's'}`}
               />
-              <Fact
-                label="Best in the room"
-                value={
-                  view.reveal.best === null
-                    ? 'Nobody solved it'
-                    : `${view.reveal.best} message${view.reveal.best === 1 ? '' : 's'}`
-                }
-              />
-              <Fact label="A good encoding" value={`${round.par} messages`} />
+              {spec !== null && !spec.additiveOnly && (
+                <Fact
+                  label="Best in the room"
+                  value={
+                    view.reveal.best === null
+                      ? 'Nobody solved it'
+                      : `${view.reveal.best} message${view.reveal.best === 1 ? '' : 's'}`
+                  }
+                />
+              )}
             </dl>
             <Rule />
             <div className="flex flex-col gap-6">

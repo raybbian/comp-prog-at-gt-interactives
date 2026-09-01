@@ -274,6 +274,55 @@ describe('seats', () => {
   });
 });
 
+describe('the best in the room', () => {
+  const revealOf = (state: State, team: Parameters<typeof buildReceiverView>[1]) => {
+    advance(state.meta, NOW); // -> reveal
+    return buildReceiverView(state, team, NOW).reveal;
+  };
+
+  it('is the fewest messages anyone solved it in', () => {
+    const state = meeting();
+    const tight = seated(state, 'TIGHT');
+    const loose = seated(state, 'LOOSE');
+    playRound(state, 1);
+    const spec = ROUNDS[1];
+    if (spec === undefined) throw new Error('missing round');
+    const target = targetFor(state.meta, spec);
+
+    sendMessage(state, tight.team, 'sender', '11', 'a', NOW);
+    paint(state, tight.team, 'receiver', target, NOW);
+    submit(state, tight.team, 'receiver', NOW);
+
+    for (let i = 0; i < 9; i += 1) {
+      sendMessage(state, loose.team, 'sender', '22', `b${i}`, NOW + i);
+    }
+    paint(state, loose.team, 'receiver', target, NOW);
+    submit(state, loose.team, 'receiver', NOW);
+
+    expect(revealOf(state, loose.team)?.best).toBe(1);
+  });
+
+  /**
+   * Every team loses a different set of messages on the lossy round, so the counts are not
+   * the same measurement. A winner there would be an artefact of who got unlucky.
+   */
+  it('is not published on the round whose messages do not compare', () => {
+    const lossy = ROUNDS.find((r) => r.additiveOnly);
+    if (lossy === undefined) throw new Error('no additive-only round');
+    const state = meeting();
+    const { team } = seated(state);
+    playRound(state, lossy.index);
+
+    for (let i = 0; i < 6; i += 1) sendMessage(state, team, 'sender', '7', `m${i}`, NOW + i);
+    paint(state, team, 'receiver', targetFor(state.meta, lossy), NOW);
+    submit(state, team, 'receiver', NOW);
+
+    const reveal = revealOf(state, team);
+    expect(reveal).not.toBeNull();
+    expect(reveal?.best).toBeNull();
+  });
+});
+
 describe('the host board', () => {
   it('ranks on rounds solved, then messages', () => {
     const state = meeting();

@@ -49,15 +49,19 @@ export type PublicRound = {
   readonly phase: Phase;
   readonly phaseEndsAt: number | null;
   readonly snakeLength: number;
-  /** What a good encoding costs. Only ever shown once the round is over. */
-  readonly par: number;
 };
 
 /** Only ever present once the round is over. */
 export type Reveal = {
   readonly target: string;
   readonly differences: readonly number[];
-  /** Fewest messages any team solved it in, or null if nobody did. */
+  /**
+   * Fewest messages any team solved it in.
+   *
+   * Null when nobody managed it — and also on a round whose channel drops messages, where
+   * every team loses a different set of them and the counts are simply not the same
+   * measurement. Publishing a winner there would be inventing one.
+   */
   readonly best: number | null;
 };
 

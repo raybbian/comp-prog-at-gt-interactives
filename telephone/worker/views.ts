@@ -77,12 +77,19 @@ function publicRound(meta: Meta, spec: RoundSpec, snakeLength: number): PublicRo
     phase: meta.phase,
     phaseEndsAt: meta.phaseEndsAt,
     snakeLength,
-    par: spec.par,
   };
 }
 
-/** Fewest messages any team solved this round in — the number the room is measured against. */
+/**
+ * Fewest messages any team solved this round in — the number the room is measured against.
+ *
+ * Not published on a round that drops messages. `additiveOnly` already marks the round
+ * whose message count cannot cost a team a place, and for the same reason: every team lost
+ * a different set of messages, so the counts are not comparable and a "best" would be an
+ * artefact of who got unlucky.
+ */
 function bestFor(state: State, spec: RoundSpec): number | null {
+  if (spec.additiveOnly) return null;
   let best: number | null = null;
   for (const team of Object.values(state.teams)) {
     const round = team.play[spec.id];
