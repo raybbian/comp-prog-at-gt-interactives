@@ -80,10 +80,6 @@ export function Waiting({
             <MicroLabel as="h1" className="animate-[pulse-label_3s_ease-in-out_infinite] text-ink">
               Marking every team&apos;s answer
             </MicroLabel>
-            <p className="text-sm text-ink-muted">
-              Nothing was marked while the clock was running, so nobody could probe it by
-              submitting twenty variations. It is all being read now.
-            </p>
             {view.answer !== null && view.answer.submittedAt !== null && (
               <div className="flex flex-col gap-2 border border-hairline p-3">
                 <MicroLabel as="h2">What you sent</MicroLabel>
@@ -126,7 +122,7 @@ export function Waiting({
                 {view.reveal.complexity}
                 {view.verdict !== null && (
                   <span className="ml-3 text-sm text-ink-muted">
-                    {view.verdict.complexityCorrect ? 'you had it' : 'not yours'}
+                    {view.verdict.complexityCorrect ? 'you had it' : 'you missed it'}
                   </span>
                 )}
               </p>
@@ -187,7 +183,7 @@ export function Waiting({
         {phase === 'done' && (
           <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-semibold tracking-[-0.02em] text-ink">
-              That&apos;s the reading done
+              That&apos;s the last one
             </h1>
             <p className="text-sm text-ink-muted">
               {view.standing === null
@@ -218,10 +214,7 @@ function Ladder() {
         <Row label="The second" value={`${bugRung(2)}`} />
         <Row label="The third" value={`${bugRung(3)}`} />
       </dl>
-      <p className="text-xs text-ink-faint">
-        Nobody tells you how many there are, which is why each one is worth more than the
-        last. Keep looking.
-      </p>
+      <p className="text-xs text-ink-faint">Nobody tells you how many there are.</p>
     </section>
   );
 }

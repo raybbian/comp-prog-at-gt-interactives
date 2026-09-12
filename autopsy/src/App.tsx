@@ -141,7 +141,7 @@ function PlayScreen() {
 
   if (meeting.health === 'revoked' || meeting.health === 'lost') {
     return (
-      <AppShell mark="Autopsy" contentClassName="max-w-sm">
+      <AppShell mark="Debug Blitz" contentClassName="max-w-sm">
         <div className="flex flex-col gap-4">
           <MicroLabel as="h1" className="text-ink">
             Lost your place
@@ -175,7 +175,7 @@ function Splash({ line }: { line: string }) {
   return (
     <AppShell mark="Competitive Programming at GT" contentClassName="max-w-sm">
       <div className="flex flex-col gap-3">
-        <h1 className="text-4xl font-semibold tracking-[-0.02em] text-ink">Autopsy</h1>
+        <h1 className="text-4xl font-semibold tracking-[-0.02em] text-ink">Debug Blitz</h1>
         <MicroLabel className="animate-[pulse-label_3s_ease-in-out_infinite]">{line}</MicroLabel>
       </div>
     </AppShell>

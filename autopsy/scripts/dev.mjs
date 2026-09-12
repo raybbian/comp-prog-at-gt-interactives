@@ -1,4 +1,4 @@
-// Runs the two halves of Autopsy together: Vite on 5177 for the client, and
+// Runs the two halves of Debug Blitz together: Vite on 5177 for the client, and
 // `wrangler dev` on 8788 for the worker and its Durable Object, with `/api` proxied
 // across so both live on one origin exactly as they do in production.
 //

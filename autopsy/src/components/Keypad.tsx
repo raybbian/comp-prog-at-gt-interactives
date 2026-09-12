@@ -7,8 +7,8 @@ import type { ReactNode } from 'react';
  * `inputMode="numeric"` does not actually restrict what can be typed — and on iOS it
  * raises the system keyboard, which eats close to half the viewport and pushes the thing
  * you are typing into off the screen. Building the keypad means the alphabet is enforced
- * rather than requested, the layout never moves, and one component serves the join code,
- * the message composer and the reply box.
+ * rather than requested, the layout never moves, and one component serves both the room
+ * code and the team code.
  *
  * Keys are `h-14` squares: comfortably past the forty-four pixel floor, and reachable
  * one-handed at the bottom of the screen.

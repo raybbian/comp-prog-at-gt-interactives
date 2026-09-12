@@ -37,9 +37,9 @@ export function RoomGate({ onEntered }: { onEntered: (code: string) => void }) {
     <AppShell mark="Competitive Programming at GT" contentClassName="max-w-sm" align="start">
       <div className="flex flex-col gap-8">
         <div className="flex flex-col gap-3">
-          <h1 className="text-4xl font-semibold tracking-[-0.02em] text-ink">Autopsy</h1>
+          <h1 className="text-4xl font-semibold tracking-[-0.02em] text-ink">Debug Blitz</h1>
           <p className="text-sm text-ink-muted">
-            Someone else&apos;s code. Say what it costs, and say what it gets wrong.
+            Find the bugs in someone else&apos;s code, and give its time complexity.
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export function RoomGate({ onEntered }: { onEntered: (code: string) => void }) {
 /** Shown when a phone comes back to a meeting that is no longer there. */
 export function RoomGone({ onReset }: { onReset: () => void }) {
   return (
-    <AppShell mark="Autopsy" contentClassName="max-w-sm">
+    <AppShell mark="Debug Blitz" contentClassName="max-w-sm">
       <div className="flex flex-col gap-4">
         <MicroLabel as="h1" className="text-ink">
           That meeting has ended

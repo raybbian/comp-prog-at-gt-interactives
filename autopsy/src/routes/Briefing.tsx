@@ -53,11 +53,11 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
           <main className="grid min-h-0 flex-1 grid-cols-[820px_1100px]">
             <section className="flex min-h-0 flex-col justify-center gap-8 overflow-hidden border-r border-hairline px-14">
               <h1 className="text-[5.5rem] font-semibold leading-none tracking-[-0.03em]">
-                Autopsy
+                Debug Blitz
               </h1>
               <p className="text-[2rem] leading-tight text-ink-muted">
-                Eight snippets, all of them broken. Say what each one costs, and say
-                everything it gets wrong.
+                Eight broken snippets. Give the time complexity of each one, and every bug
+                in it.
               </p>
 
               <div className="flex flex-col gap-3 border-t border-hairline pt-8">
@@ -81,7 +81,7 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
             </section>
 
             <section className="flex min-h-0 flex-col justify-center gap-7 overflow-hidden px-14">
-              <MicroLabel size="lg">An answer, written the way answers should be</MicroLabel>
+              <MicroLabel size="lg">An example answer</MicroLabel>
               {example !== undefined && <Snippet code={example.code} size="room" />}
 
               <div className="grid grid-cols-[220px_1fr] items-baseline gap-x-8 gap-y-4">
@@ -102,7 +102,7 @@ export function Briefing({ joinUrl }: { joinUrl: string }) {
               <p className="border-t border-hairline pt-6 text-[1.5rem] leading-snug text-ink-muted">
                 {MAX_FINDINGS_CHARS} characters for the bugs. Cite lines, separate with
                 semicolons, and do not write sentences — “there might be an indexing
-                problem” scores nothing, because it would be just as true of correct code.
+                problem” scores nothing.
               </p>
             </section>
           </main>

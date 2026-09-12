@@ -13,13 +13,13 @@ import { QUESTIONS } from './protocol/questions.ts';
 describe('App', () => {
   it('renders without a DOM or an event stream', () => {
     const html = renderToString(<App />);
-    expect(html).toContain('Autopsy');
+    expect(html).toContain('Debug Blitz');
     expect(html).toContain('Competitive Programming at GT');
   });
 
   it('renders the briefing slide with a worked example', () => {
     const html = renderToString(<Briefing joinUrl="https://example.test" />);
-    expect(html).toContain('Autopsy');
+    expect(html).toContain('Debug Blitz');
     expect(html).toContain('example.test');
     // The example on the slide is the warm-up question itself, which is off the record —
     // so showing it gives nothing away and the first question is one the room has seen.

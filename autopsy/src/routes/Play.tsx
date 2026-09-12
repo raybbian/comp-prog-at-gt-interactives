@@ -77,8 +77,8 @@ export function Play({
         <Rule />
         <p className="text-xs text-ink-faint">
           {question.counts
-            ? 'Nobody will tell you how many bugs there are. Each one you find is worth more than the last.'
-            : 'This one is a warm-up and does not count. Work out how much detail an answer needs.'}
+            ? 'Nobody will tell you how many bugs there are.'
+            : 'This one is a warm-up and does not count.'}
         </p>
       </div>
     </AppShell>

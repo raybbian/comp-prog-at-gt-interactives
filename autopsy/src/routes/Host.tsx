@@ -104,7 +104,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
             <div className="flex items-center gap-5">
               <img src={logoUrl} alt="" aria-hidden="true" className="size-10" />
               <MicroLabel size="xl" className="text-ink">
-                Autopsy
+                Debug Blitz
               </MicroLabel>
             </div>
             <div className="flex items-center gap-12">
@@ -142,8 +142,7 @@ export function Host({ view, meeting }: { view: HostView; meeting: Meeting<HostV
                   </div>
                   <Snippet code={question.code} size="room" className="min-h-0" />
                   <p className="mt-auto text-[1.375rem] text-ink-faint">
-                    Time complexity, and everything wrong with it. Nobody will tell you how
-                    many there are.
+                    Time complexity, and everything wrong with it.
                   </p>
                 </>
               )}
@@ -253,10 +252,6 @@ function Lobby({ host, room }: { host: string; room: string }) {
         <Figure label="2nd" value={String(bugRung(2))} />
         <Figure label="3rd" value={String(bugRung(3))} />
       </dl>
-      <p className="text-[1.375rem] text-ink-faint">
-        Nobody tells you how many bugs there are. That is why each one is worth more than the
-        last.
-      </p>
     </>
   );
 }
@@ -271,10 +266,6 @@ function Grading({ view }: { view: HostView }) {
       <p className="font-mono text-[7rem] leading-none tnum text-ink">
         {done}
         <span className="text-ink-faint">/{view.answeredCount}</span>
-      </p>
-      <p className="max-w-[1000px] text-[2rem] leading-tight text-ink-muted">
-        Nothing was marked while the clock was running, so no team could learn the answer by
-        submitting twenty variations of it.
       </p>
       {view.failedGrades > 0 && (
         <p className="mt-auto text-[1.5rem] text-ink">

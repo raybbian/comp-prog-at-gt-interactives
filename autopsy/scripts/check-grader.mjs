@@ -1,7 +1,7 @@
 /**
  * Grades a handful of made-up answers against the real Claude API and prints the verdicts.
  *
- * This exists because the grader is the one part of Autopsy that cannot be tested without
+ * This exists because the grader is the one part of Debug Blitz that cannot be tested without
  * spending money, and "does the marking scheme actually mark the way I think it does" is a
  * question worth answering *before* forty people are looking at the projector rather than
  * during. It is also the thing to run right after putting the API key in: a wrong key, a
