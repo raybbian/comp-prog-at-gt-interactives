@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // The worker shares src/protocol with the app but must not see the DOM: a stray
+    // `localStorage` or `document` in server code would otherwise typecheck clean and
+    // fail at the one moment nobody is watching.
+    "lib": ["ES2023"],
+    "types": ["@cloudflare/workers-types"],
+    "allowImportingTsExtensions": true
+  },
+  "include": ["worker", "src/protocol"]
+}

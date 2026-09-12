@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+@import '@cpatgt/shared/theme.css';
+@import '@cpatgt/shared/base.css';
+
+/* Shared components live outside this package's root, so Tailwind has to be told
+   to scan them or every class they use is purged from the production build. */
+@source './';
+@source '../../shared/src';
+
+/*
+ * This game adds no colours.
+ *
+ * Telephone earns its nine extra tokens because the picture *is* the puzzle. Here the
+ * puzzle is a page of code, and the temptation is syntax highlighting — which would mean
+ * six or seven new hues, on the one surface in the interactive where the reader has to
+ * weigh every character equally. Highlighting also tells you where to look, and the whole
+ * exercise is deciding that for yourself: a keyword in blue and a literal in orange is a
+ * hint about structure, and the bug is usually in the structure.
+ *
+ * So the snippet is monochrome, and the only departures from the shared theme are the two
+ * below: a line-number column that recedes, and a marker for the line a team is pointing
+ * at. Both are existing tokens. The accent still means one thing — this phone's own
+ * pending action, which is the Submit key and nothing else.
+ */
+
+@layer base {
+  /*
+   * Phones, not a booth screen. The bottom of the viewport is where the answer box lives
+   * and also where iOS puts the home indicator and its collapsing URL bar, so every
+   * pinned bar pays the safe-area inset.
+   */
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  .safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+
+  /*
+   * The snippet.
+   *
+   * `tabular-nums` on the gutter so the numbers do not shuffle between 9 and 10, and
+   * `white-space: pre` rather than `pre-wrap`: a wrapped line of code silently changes
+   * which line number a statement is on, and "line 4" is how a team is about to describe
+   * the bug. If it does not fit, it scrolls — that is the honest failure.
+   */
+  .snippet {
+    font-variant-ligatures: none;
+    tab-size: 4;
+  }
+
+  .snippet-line {
+    white-space: pre;
+  }
+}

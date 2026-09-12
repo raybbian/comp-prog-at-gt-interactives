@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cpatgt-autopsy",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // The built client is served by the same worker that serves /api, so the whole game
+  // lives on one origin. Sessions are stored in cookies and localStorage, both of which
+  // are origin-scoped, and a second origin would mean every phone in the room losing its
+  // seat at once.
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+
+  // One meeting, one object: a single-threaded actor holding every team, answer and verdict
+  // in memory, with durable storage underneath it. Verdicts especially — each one is a model
+  // call we paid for, and it must survive the object being evicted.
+  //
+  // The object is named after the room code on the projector, which is minted when the host
+  // screen is opened. So a new meeting is a new tab rather than a redeploy, and two host tabs
+  // are two meetings — the room joins the code it can see.
+  "durable_objects": {
+    "bindings": [{ "name": "MEETING", "class_name": "Meeting" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Meeting"] }],
+
+  // ANTHROPIC_API_KEY is a secret and is deliberately not here — see README > Deploying.
+  // GRADER_MODEL is optional and overrides the default in worker/grader.ts; uncomment it to
+  // grade on something cheaper than the default.
+  // "vars": { "GRADER_MODEL": "claude-sonnet-5" },
+
+  "observability": { "enabled": true }
+}

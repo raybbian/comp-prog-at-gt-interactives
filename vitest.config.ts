@@ -16,8 +16,9 @@ export default defineConfig({
       project('nim'),
       project('milk'),
       project('poster'),
-      // Telephone is the only workspace with a server half, and it lives outside src/.
+      // These two have a server half, and it lives outside src/.
       project('telephone', ['src/**/*.test.{ts,tsx}', 'worker/**/*.test.ts']),
+      project('autopsy', ['src/**/*.test.{ts,tsx}', 'worker/**/*.test.ts']),
     ],
   },
 });
