@@ -11,7 +11,8 @@
     "milk",
     "poster",
     "telephone",
-    "autopsy"
+    "autopsy",
+    "boss"
   ],
   "scripts": {
     "dev:nim": "npm run dev -w nim",
@@ -19,12 +20,14 @@
     "dev:poster": "npm run dev -w poster",
     "dev:telephone": "npm run dev -w telephone",
     "dev:autopsy": "npm run dev -w autopsy",
+    "dev:boss": "npm run dev -w boss",
     "build": "npm run build --workspaces --if-present",
     "preview:nim": "npm run preview -w nim",
     "preview:milk": "npm run preview -w milk",
     "preview:poster": "npm run preview -w poster",
     "preview:telephone": "npm run preview -w telephone",
     "preview:autopsy": "npm run preview -w autopsy",
+    "preview:boss": "npm run preview -w boss",
     "deploy:telephone": "npm run deploy -w telephone",
     "deploy:autopsy": "npm run deploy -w autopsy",
     "test": "vitest run",

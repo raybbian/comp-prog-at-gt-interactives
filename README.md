@@ -10,6 +10,7 @@ outreach. Each one lives in its own folder and shares a single design system.
 | `milk/`   | Farmer John's contaminated bucket, against an adversary          |
 | `telephone/` | Two phones, eight digits a message, one picture to get across |
 | `autopsy/`   | Eight broken snippets: name the complexity, find the bugs         |
+| `boss/`      | Hit the boss, never repeat the bot's last hit, land the finishing blow |
 
 ## Getting started
 
@@ -21,6 +22,7 @@ npm run dev:milk   # http://localhost:5174
 npm run dev:poster # http://localhost:5175
 npm run dev:telephone # http://localhost:5176 — client and worker together
 npm run dev:autopsy   # http://localhost:5177 — client and worker together
+npm run dev:boss      # http://localhost:5178
 ```
 
 Other scripts, all from the repo root:
@@ -34,6 +36,7 @@ npm run preview:milk   # serves milk/dist   on :4174
 npm run preview:poster # serves poster/dist on :4175
 npm run preview:telephone # serves telephone/dist on :4176 (client only)
 npm run preview:autopsy   # serves autopsy/dist   on :4177 (client only)
+npm run preview:boss      # serves boss/dist      on :4178
 ```
 
 Ports are pinned per folder so they can all run side by side on one booth machine.
@@ -752,9 +755,60 @@ rather than a spinner because it is a real state the room can see — twenty ans
 model and the standings are about to move — and hiding it would make the board look frozen at
 the one moment everyone is watching it.
 
+## Boss Fight
+
+A game for a room full of phones, played against a bot that never makes a mistake. The
+boss has some health; the visitor and the bot take turns hitting it for any whole amount
+from 1 up to a limit `m`, **nobody may repeat the amount the other side just dealt**, and
+whoever lands the finishing blow wins. The visitor hits first.
+
+**The game is presented as "Boss Fight" and the problem it is taken from is never named**,
+for the same reason Nim is only ever the Stone Game: the name is a search term and the
+editorial is one search away. `App.test.tsx` asserts the rendered page never contains it.
+
+### The levels
+
+Three levels, and the only thing that changes between them is the damage limit. Which
+level a limit belongs to is decided by how many factors of 2 the number `m + 1` has:
+
+| Level  | `m`                                       | Limits dealt     | What is true about it                                                              |
+| ------ | ----------------------------------------- | ---------------- | ---------------------------------------------------------------------------------- |
+| Easy   | even                                      | 4, 6, 8, 10      | the losing health values are exactly the multiples of `m + 1`, and `m + 1 - x` is always a legal reply |
+| Medium | odd, `m + 1` has an even number of 2s     | 3, 11, 15        | still exactly the multiples of `m + 1`, but the hit `(m + 1) / 2` has to be answered differently |
+| Hard   | odd, `m + 1` has an odd number of 2s      | 5, 7, 9, 13      | the losing values drift off the multiples; consecutive ones are `m + 1` or `m + 2` apart |
+
+None of this is on screen. The level picker says Easy, Medium and Hard and nothing else;
+working out what makes Hard hard is the game.
+
+Every opening is winnable for the visitor, and that is enforced rather than hoped for:
+`openingsFor` in `boss/src/game/levels.ts` reads the losing values off the same table the
+bot plays from and never deals one, and `boss.test.ts` checks that table against an
+exhaustive search over every (health, forbidden) state, checks the factors-of-2 rule for
+every odd `m` up to 61, and plays a perfect visitor against the bot from every opening of
+every level. The bot never gives up a won position, and from a lost one it picks the hit
+that leaves the visitor the fewest winning replies.
+
+The health is drawn as a number and one continuous bar, deliberately not as a row of units:
+a fixed row width would draw the modulus on the screen. There is no hint, no leaderboard and
+no name entry. Lose, and the verdict says there was a better hit somewhere; play again.
+
+- **Touch** — first tap stages the hit, a second tap or the Hit button commits.
+- **Mouse** — hover previews, one click commits.
+
+### Running it in a room
+
+```sh
+npm run dev:boss        # http://localhost:5178, also on the LAN (--host is on)
+```
+
+Phones on the same network open the laptop's IP on 5178; for a venue network that blocks
+that, a `cloudflared tunnel --url http://localhost:5178` URL works, since the dev server
+allows `.trycloudflare.com` hosts. Or point them at the Pages URL once `cpatgt-boss` is
+deployed.
+
 ## Where the leaderboards live
 
-(The poster has no leaderboard — it stores nothing at all. Telephone's standings and
+(The poster has no leaderboard — it stores nothing at all, and neither does Boss Fight. Telephone's standings and
 Autopsy's live in their Durable Objects rather than in any browser, which is also why
 `Ctrl` `Shift` `K` on those two boards resets the meeting on the server rather than
 clearing a local list.)
@@ -771,13 +825,14 @@ before someone tidies the browser mid-event.
 ## Deploying
 
 Each interactive is a static bundle with `base: './'` and no backend, so it deploys
-as three independent Cloudflare Pages projects — one per domain, one repo.
+as four independent Cloudflare Pages projects — one per domain, one repo.
 
 | Folder    | Pages project     | Output directory |
 | --------- | ----------------- | ---------------- |
 | `nim/`    | `cpatgt-nim`      | `nim/dist`       |
 | `milk/`   | `cpatgt-milk`     | `milk/dist`      |
 | `poster/` | `cpatgt-poster`   | `poster/dist`    |
+| `boss/`   | `cpatgt-boss`     | `boss/dist`      |
 
 Telephone and Autopsy are the exceptions: they have server state, so each is a **Worker**
 with a Durable Object rather than a Pages project, and each serves its own client from its
@@ -817,12 +872,13 @@ project. Pull requests run the same checks and skip the uploads. Node comes from
 
 ### One-time setup
 
-1. Create the three direct-upload projects:
+1. Create the four direct-upload projects:
 
    ```sh
    npx wrangler pages project create cpatgt-nim    --production-branch main
    npx wrangler pages project create cpatgt-milk   --production-branch main
    npx wrangler pages project create cpatgt-poster --production-branch main
+   npx wrangler pages project create cpatgt-boss   --production-branch main
    ```
 
 2. Cloudflare dashboard → My Profile → API Tokens → create a token with the

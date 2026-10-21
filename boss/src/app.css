@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@import '@cpatgt/shared/theme.css';
+@import '@cpatgt/shared/base.css';
+
+/* Shared components live outside this package's root, so Tailwind has to be told
+   to scan them or every class they use is purged from the production build. */
+@source './';
+@source '../../shared/src';
+
+/*
+ * Phones, not a booth screen. No colours are added: the accent still means one thing,
+ * this phone's own pending hit.
+ */
+@layer base {
+  body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/*
+ * The shell's footer holds the commit button, at the bottom of the viewport, which is
+ * also where iOS draws the home indicator. The shared footer is a fixed 4rem rail for
+ * booth screens; here it keeps that as a minimum and grows by the safe-area inset. This
+ * rule is deliberately outside every @layer so it wins over the `h-16` utility.
+ */
+footer {
+  height: auto;
+  min-height: 4rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

@@ -1,6 +1,6 @@
 name: Deploy
 
-# Every push to main rebuilds every interactive and uploads it. The three static ones
+# Every push to main rebuilds every interactive and uploads it. The four static ones
 # are Cloudflare Pages projects; Telephone and Autopsy keep server state, so each is a
 # Worker with a Durable Object and deploys with `wrangler deploy` instead. Pull requests
 # run the same checks without deploying.
@@ -38,8 +38,8 @@ jobs:
 
       - run: npm test
 
-      # Builds all workspaces -> nim/dist, milk/dist, poster/dist, telephone/dist,
-      # autopsy/dist
+      # Builds all workspaces -> nim/dist, milk/dist, poster/dist, boss/dist,
+      # telephone/dist, autopsy/dist
       - run: npm run build
 
       - name: Deploy nim
@@ -65,6 +65,14 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy poster/dist --project-name=cpatgt-poster --branch=main
+
+      - name: Deploy boss
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy boss/dist --project-name=cpatgt-boss --branch=main
 
       # Not Pages projects: these two serve their own client from the same worker that
       # serves /api, so that each game lives on one origin. Sessions are held in a cookie

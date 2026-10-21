@@ -16,6 +16,7 @@ export default defineConfig({
       project('nim'),
       project('milk'),
       project('poster'),
+      project('boss'),
       // These two have a server half, and it lives outside src/.
       project('telephone', ['src/**/*.test.{ts,tsx}', 'worker/**/*.test.ts']),
       project('autopsy', ['src/**/*.test.{ts,tsx}', 'worker/**/*.test.ts']),
