@@ -105,51 +105,62 @@ function pick<T>(items: readonly T[], rng: Rng): T {
   return chosen;
 }
 
-/**
- * From a lost position every hit loses to perfect play, so rank by how likely an
- * imperfect opponent is to go wrong: fewest winning replies as a share of all replies.
- * Ties go to whichever hit leaves more health, since a longer game gives a guessing
- * visitor more chances to hand the game back.
- */
-function trapHit(table: Table, p: Position, rng: Rng): number {
-  const candidates = legalHits(table.m, p).map((hit) => {
-    const next: Position = { health: p.health - hit, forbidden: hit };
-    const replies = legalHits(table.m, next).length;
-    return {
-      hit,
-      risk: winningHits(table, next).length / replies,
-      healthLeft: next.health,
-    };
-  });
+export type Mover = 'bot' | 'you';
 
-  let best = candidates[0];
-  if (best === undefined) throw new Error('No legal hits from a live position');
-  for (const candidate of candidates) {
-    if (
-      candidate.risk < best.risk ||
-      (candidate.risk === best.risk && candidate.healthLeft > best.healthLeft)
-    ) {
-      best = candidate;
-    }
-  }
-
-  const tied = candidates.filter(
-    (c) => c.risk === best.risk && c.healthLeft === best.healthLeft,
-  );
-  return pick(tied, rng).hit;
+/** The hits a side may consider: the winning ones when it has any, otherwise all of them. */
+function candidateHits(table: Table, p: Position): number[] {
+  const winning = winningHits(table, p);
+  return winning.length > 0 ? winning : legalHits(table.m, p);
 }
 
 /**
- * The bot. Plays perfectly: it finishes the boss when it can, never gives up a won
- * position, and makes a lost position as awkward as possible. Returns null only when
- * the game is already over.
+ * How many more hits the game lasts from `p`, with `mover` to hit, when the bot
+ * stretches it out and the visitor cuts it short, and neither side ever gives up a win
+ * it holds. That is the length the bot can *guarantee*: a visitor who plays slower only
+ * makes the game longer. `memo` is shared across one decision.
+ */
+export function gameLength(
+  table: Table,
+  p: Position,
+  mover: Mover,
+  memo: Map<string, number> = new Map(),
+): number {
+  if (p.health <= 0) return 0;
+  const key = `${mover}:${p.health},${p.forbidden}`;
+  const cached = memo.get(key);
+  if (cached !== undefined) return cached;
+
+  const other: Mover = mover === 'bot' ? 'you' : 'bot';
+  let best = mover === 'bot' ? -Infinity : Infinity;
+  for (const hit of candidateHits(table, p)) {
+    const next: Position = { health: p.health - hit, forbidden: hit };
+    const length = 1 + gameLength(table, next, other, memo);
+    best = mover === 'bot' ? Math.max(best, length) : Math.min(best, length);
+  }
+  memo.set(key, best);
+  return best;
+}
+
+/**
+ * The bot. It never gives up a won position, and among the hits that keep its win (or,
+ * from a lost position, among all of them) it plays one that keeps the game going the
+ * longest, chosen at random when several tie. A longer game is more turns for the
+ * visitor to find the pattern, or to slip. This still finishes the boss whenever it can:
+ * at health <= m any smaller hit leaves the visitor a finishing reply, so the kill is the
+ * only winning hit. Returns null only when the game is already over.
  */
 export function bestHit(table: Table, p: Position, rng: Rng = Math.random): number | null {
   if (p.health <= 0) return null;
-  const finishing = legalHits(table.m, p).filter((hit) => hit >= p.health);
-  if (finishing.length > 0) return pick(finishing, rng);
-  const winning = winningHits(table, p);
-  return winning.length > 0 ? pick(winning, rng) : trapHit(table, p, rng);
+  const memo = new Map<string, number>();
+  const scored = candidateHits(table, p).map((hit) => ({
+    hit,
+    length: 1 + gameLength(table, { health: p.health - hit, forbidden: hit }, 'you', memo),
+  }));
+  const longest = Math.max(...scored.map((s) => s.length));
+  return pick(
+    scored.filter((s) => s.length === longest).map((s) => s.hit),
+    rng,
+  );
 }
 
 /** How many factors of 2 a positive integer has. */

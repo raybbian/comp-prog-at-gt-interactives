@@ -785,8 +785,9 @@ Every opening is winnable for the visitor, and that is enforced rather than hope
 bot plays from and never deals one, and `boss.test.ts` checks that table against an
 exhaustive search over every (health, forbidden) state, checks the factors-of-2 rule for
 every odd `m` up to 61, and plays a perfect visitor against the bot from every opening of
-every level. The bot never gives up a won position, and from a lost one it picks the hit
-that leaves the visitor the fewest winning replies.
+every level. The bot never gives up a won position, and among the hits that keep its win,
+or from a lost position among all of them, it plays whichever keeps the game going longest,
+at random when several tie. More turns is more chances to see the pattern, or to slip.
 
 The health is drawn as a number and one continuous bar, deliberately not as a row of units:
 a fixed row width would draw the modulus on the screen. There is no hint, no leaderboard and

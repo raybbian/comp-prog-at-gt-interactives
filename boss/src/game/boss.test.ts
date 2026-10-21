@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   bestHit,
   classify,
+  gameLength,
   isLosing,
   isWinningHit,
   legalHits,
@@ -191,17 +192,66 @@ describe('the bot', () => {
     expect(bestHit(table, { health: 1, forbidden: 0 }, rng)).not.toBeNull();
   });
 
-  it('finishes the boss whenever it can', () => {
-    const table = classify(6, 30);
-    for (let health = 1; health <= 6; health += 1) {
-      for (let forbidden = 0; forbidden <= 6; forbidden += 1) {
-        const finishing = legalHits(6, { health, forbidden }).filter((h) => h >= health);
-        if (finishing.length === 0) continue;
-        const hit = bestHit(table, { health, forbidden }, rng);
-        expect(hit).not.toBeNull();
-        expect((hit as number) >= health).toBe(true);
+  it('keeps the game going as long as it can, against exhaustive search', () => {
+    // Independent of gameLength: the same definition built on the raw searcher. The bot
+    // maximises, the visitor minimises, and whoever holds a win only considers winning hits.
+    for (let m = 2; m <= 9; m += 1) {
+      const moverWins = searcher(m);
+      const memo = new Map<string, number>();
+      const length = (p: Position, mover: 'bot' | 'you'): number => {
+        if (p.health <= 0) return 0;
+        const key = `${mover}:${p.health},${p.forbidden}`;
+        const cached = memo.get(key);
+        if (cached !== undefined) return cached;
+        const all = legalHits(m, p);
+        const winning = all.filter((h) => !moverWins({ health: p.health - h, forbidden: h }));
+        const options = (winning.length > 0 ? winning : all).map(
+          (h) => 1 + length({ health: p.health - h, forbidden: h }, mover === 'bot' ? 'you' : 'bot'),
+        );
+        const value = mover === 'bot' ? Math.max(...options) : Math.min(...options);
+        memo.set(key, value);
+        return value;
+      };
+
+      const table = classify(m, 50);
+      for (let health = 1; health <= 50; health += 1) {
+        for (let forbidden = 0; forbidden <= m; forbidden += 1) {
+          const p = { health, forbidden };
+          expect(gameLength(table, p, 'bot'), `m=${m} ${health},${forbidden}`).toBe(length(p, 'bot'));
+          const hit = bestHit(table, p, rng) as number;
+          const after = { health: health - hit, forbidden: hit };
+          expect(1 + length(after, 'you'), `m=${m} ${health},${forbidden} hit ${hit}`).toBe(length(p, 'bot'));
+        }
       }
     }
+  });
+
+  it('still finishes the boss whenever it can', () => {
+    // Stretching the game never costs a kill: at health <= m any smaller hit leaves the
+    // visitor a finishing reply, so the kill is the only winning hit.
+    for (let m = 2; m <= 13; m += 1) {
+      const table = classify(m, 30);
+      for (let health = 1; health <= m; health += 1) {
+        for (let forbidden = 0; forbidden <= m; forbidden += 1) {
+          const finishing = legalHits(m, { health, forbidden }).filter((h) => h >= health);
+          if (finishing.length === 0) continue;
+          const hit = bestHit(table, { health, forbidden }, rng) as number;
+          expect(hit, `m=${m} ${health},${forbidden}`).toBeGreaterThanOrEqual(health);
+        }
+      }
+    }
+  });
+
+  it('spreads its choice over every hit that ties for longest', () => {
+    const table = classify(4, 30);
+    const seen = new Set<number>();
+    const spread = mulberry32(7);
+    for (let i = 0; i < 200; i += 1) {
+      const hit = bestHit(table, { health: 1, forbidden: 0 }, spread);
+      if (hit !== null) seen.add(hit);
+    }
+    // Every hit finishes at health 1, so all four tie and all four should show up.
+    expect([...seen].sort()).toEqual([1, 2, 3, 4]);
   });
 
   it('always plays a legal hit, and never gives up a won position', () => {
